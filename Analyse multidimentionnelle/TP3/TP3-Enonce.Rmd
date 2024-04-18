@@ -1,0 +1,248 @@
+---
+title: "TP3 : Suite ACP"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Exercice 1
+----------------------------------------------------------------------------------------
+
+```{r}
+Notes<- matrix(c(6,6,5,5.5,8,8,8,8,6,7,11,9.5,14.5,14.5,15.5,15,14,14,12,12.5,11,
+                  10,5.5,7,5.5,7,14,11.5,13,12.5,8.5,9.5,9,9.5,12.5,12,
+                  12,11.5,14,12,6,8,8,7,15,16,14,12),nrow=12,byrow=T)
+rownames(Notes) <- c("Rémi","Thomas","Gaëtan","Ahmed","Louise","Kylian",
+                       "Antoine","Raphaël","Jean","Rayan","Matthieu","Sophie")
+colnames(Notes) <- c("Math","Phys","Fr","Ang")
+```
+
+* Effectuer l'analyse ACP
+
+```{r}
+library(FactoMineR)
+res.acp <- PCA(Notes,scale.unit = TRUE)
+summary(res.acp,nb.dec=2, nb.elements =Inf, nbind = Inf, ncp=3)
+```
+
+```{r}
+eigenvalues <- res.acp$eig
+print(eigenvalues[,1]>=1)
+bplt <- barplot(eigenvalues[, 1], names.arg=1:nrow(eigenvalues),
+                main = "Eboulis des valeurs propres",
+                xlab = "Principal Components",
+                ylab = "Valeurs propres",
+                col ="steelblue")
+lines(x = bplt, eigenvalues[, 1], type="b", pch=19, col = "red")
+abline(a = 1 , b = 0, lty = 2)
+```
+Par le critère du coude on gardera 2 axe principaux.
+
+```{r}
+ctr_mean <- mean(res.acp$ind$contrib)
+print(paste("la contribution moyenne des individus est :",ctr_mean))
+```
+
+```{r}
+contrib_sort<- sort(res.acp$ind$contrib[,1],decreasing = TRUE)
+print(paste(c("les élèves qui contribuent le plus a l'axe 1 sont:",names(head(contrib_sort,3)))))
+
+contrib_sort2<- sort(res.acp$ind$contrib[,2],decreasing = TRUE)
+print(paste(c("les élèves qui contribuent le plus a l'axe 2 sont:",names(head(contrib_sort2,3)))))
+
+cos2_sum <- res.acp$ind$cos2[,"Dim.1"] + res.acp$ind$cos2[,"Dim.2"]
+print(paste(c("les individues mal représentés sont:",names(cos2_sum[cos2_sum<mean(res.acp$ind$cos2[,1:2])]))))
+```
+
+```{r}
+ctr_sort<- sort(res.acp$var$contrib[,1],decreasing = TRUE)
+print(paste(c("les UE qui contribuent le plus a l'axe 1 sont:",names(head(ctr_sort,3)))))
+
+ctr_sort2<- sort(res.acp$var$contrib[,2],decreasing = TRUE)
+print(paste(c("les UE qui contribuent le plus a l'axe 2 sont:",names(head(ctr_sort2,3)))))
+
+cos2_sum <- res.acp$var$cos2[,"Dim.1"] + res.acp$var$cos2[,"Dim.2"]
+print(paste(c("les UE mal représentés sont:",names(cos2_sum[cos2_sum<0.8]))))
+```
+On conclue que l'axe 1 correspond à la moyenne générale et que l'axe 2 corresponds à etre une matière scientifique si on est négatif et etre une matière littéraire si on contribue positivement à l'axe 2. 
+
+
+
+Exercice 2
+
+Six marques de jus d’orange 100% pur jus présentes dans les supermarchés français ont été évaluées par un panel d’experts selon sept variables sensorielles (intensité de l’odeur, typicité de l’odeur, teneur en pulpe, intensité du goût, acidité, amertume, douceur). Ces 6 marques sont Pampryl amb. (conservation à température ambiante), Tropicana amb., Fruvita amb., Joker amb., Tropicana fr. (conservation au frais), Pampryl fr. 
+
+
+1)  Importer le jeu de données "jusdorange.csv" et appeler le "jus".
+
+```{r}
+jus <- read.table("jusdorange.csv",sep=";", row.names=1, header=TRUE)
+```
+
+2) Créer le tableau individus-variables "jus" associé et afficher le.
+
+```{r}
+```
+
+3)  Afficher le descriptif des variables.
+
+```{r}
+summary(jus)
+```
+
+
+4) Afficher les 6 premières lignes de "jus".
+
+```{r}
+head(jus,6)
+```
+
+
+
+5) Afficher la matrice de corrélation associée à ce jeu données "jus"  Commenter brièvement les corrélations .
+
+```{r}
+cor_jus <- cor(jus)
+cor_jus
+```
+
+
+6) Lancer FactoMineR sur ce jeu de données afin de faire l'ACP . On prendra soin d'afficher les résultats de l'ACP avec une décimale seulement, pour les 4 premières composantes principales, toutes les variables et tous les individus . 
+
+
+```{r}
+res.jus <- PCA(jus,scale.unit = TRUE)
+summary(res.jus,nb.dec=1, nb.elements =Inf, nbind = Inf, ncp=4)
+```
+
+
+
+7) Faîtes l'analyse statistique complète de l'ACP associée . On prendra soin de justifier le nombre d'axes factoriels à retenir, de faire l'analyse des individus, des variables et la synthèse. 
+
+```{r}
+eigenvalues <- res.jus$eig
+print(eigenvalues[,1]>=1)
+bplt <- barplot(eigenvalues[, 1], names.arg=1:nrow(eigenvalues),
+                main = "Eboulis des valeurs propres",
+                xlab = "Principal Components",
+                ylab = "Valeurs propres",
+                col ="steelblue")
+lines(x = bplt, eigenvalues[, 1], type="b", pch=19, col = "red")
+abline(a = 1 , b = 0, lty = 2)
+```
+On prendra donc 2 axe principeaux d'après le critère de Kaiser
+
+```{r}
+ctr_mean <- mean(res.jus$ind$contrib)
+print(paste("la contribution moyenne des individus est :",ctr_mean))
+```
+
+```{r}
+contrib_sort<- sort(res.jus$ind$contrib[,1],decreasing = TRUE)
+print(paste(c("les individues qui contribuent le plus a l'axe 1 sont:",names(head(contrib_sort,3)))))
+
+contrib_sort2<- sort(res.jus$ind$contrib[,2],decreasing = TRUE)
+print(paste(c("les individues qui contribuent le plus a l'axe 2 sont:",names(head(contrib_sort2,3)))))
+
+cos2_sum <- rowSums(res.jus$ind$cos2[,1:4])
+print(paste(c("les variables mal représentés sont:", rownames(res.jus$ind$cos2[,1:4])[cos2_sum < 0.6])))
+```
+```{r}
+ctr_mean2 <- mean(res.jus$var$contrib)
+print(paste("la contribution moyenne des variables est :",ctr_mean2))
+```
+
+```{r}
+ctr_sort<- sort(res.jus$var$contrib[,1],decreasing = TRUE)
+print(paste(c("les variables qui contribuent le plus a l'axe 1 sont:",names(head(ctr_sort,3)))))
+
+ctr_sort2<- sort(res.jus$var$contrib[,2],decreasing = TRUE)
+print(paste(c("les variables qui contribuent le plus a l'axe 2 sont:",names(head(ctr_sort2,3)))))
+
+cos2_sum <- rowSums(res.jus$var$cos2[,1:4])
+print(paste(c("les variables mal représentés sont:", rownames(res.jus$var$cos2[,1:4])[cos2_sum < 0.8])))
+```
+
+Exercice 3
+
+
+* Importation des données (compiler ce qui est ci-dessous sans le modifier) 
+
+```{r}
+library(FactoMineR)
+data("decathlon")
+decathlon<-decathlon[1:13, 1:10]
+```
+
+
+* Effectuer l'analyse ACP de ce jeu de données
+
+```{r}
+summary(decathlon)
+```
+
+```{r}
+res.dec <- PCA(decathlon,scale.unit = TRUE,axes = c(2,3))
+summary(res.dec,nb.dec=1, nb.elements =Inf, nbind = Inf, ncp=4)
+```
+
+```{r}
+eigenvalues <- res.dec$eig
+print(eigenvalues[,1]>=1)
+bplt <- barplot(eigenvalues[, 1], names.arg=1:nrow(eigenvalues),
+                main = "Eboulis des valeurs propres",
+                xlab = "Principal Components",
+                ylab = "Valeurs propres",
+                col ="steelblue")
+lines(x = bplt, eigenvalues[, 1], type="b", pch=19, col = "red")
+abline(a = 1 , b = 0, lty = 2)
+```
+
+On prendra donc 4 axe principeaux d'après le critère de Kaiser
+
+```{r}
+ctr_mean <- mean(res.dec$ind$contrib)
+print(paste("la contribution moyenne des individus est :",ctr_mean))
+```
+
+```{r}
+contrib_sort<- sort(res.dec$ind$contrib[,1],decreasing = TRUE)
+print(paste(c("les individues qui contribuent le plus a l'axe 1 sont:",names(head(contrib_sort,3)))))
+
+contrib_sort2<- sort(res.dec$ind$contrib[,2],decreasing = TRUE)
+print(paste(c("les individues qui contribuent le plus a l'axe 2 sont:",names(head(contrib_sort2,3)))))
+
+contrib_sort3<- sort(res.dec$ind$contrib[,3],decreasing = TRUE)
+print(paste(c("les individues qui contribuent le plus a l'axe 3 sont:",names(head(contrib_sort3,3)))))
+
+contrib_sort4<- sort(res.dec$ind$contrib[,4],decreasing = TRUE)
+print(paste(c("les individues qui contribuent le plus a l'axe 4 sont:",names(head(contrib_sort4,3)))))
+
+cos2_sum <- rowSums(res.dec$ind$cos2[,1:4])
+print(paste(c("les variables mal représentés sont:", rownames(res.dec$ind$cos2[,1:4])[cos2_sum < 0.6])))
+```
+```{r}
+ctr_mean2 <- mean(res.dec$var$contrib)
+print(paste("la contribution moyenne des individus est :",ctr_mean2))
+```
+
+```{r}
+ctr_sort<- sort(res.dec$var$contrib[,1],decreasing = TRUE)
+print(paste(c("les variables qui contribuent le plus a l'axe 1 sont:",names(head(ctr_sort,3)))))
+
+ctr_sort2<- sort(res.dec$var$contrib[,2],decreasing = TRUE)
+print(paste(c("les variables qui contribuent le plus a l'axe 2 sont:",names(head(ctr_sort2,3)))))
+
+ctr_sort3<- sort(res.dec$var$contrib[,3],decreasing = TRUE)
+print(paste(c("les variables qui contribuent le plus a l'axe 3 sont:",names(head(ctr_sort3,3)))))
+
+ctr_sort4<- sort(res.dec$var$contrib[,4],decreasing = TRUE)
+print(paste(c("les variables qui contribuent le plus a l'axe 4 sont:",names(head(ctr_sort4,3)))))
+
+cos2_sum <- rowSums(res.dec$var$cos2[,1:4])
+print(paste(c("les variables mal représentés sont:", rownames(res.dec$var$cos2[,1:4])[cos2_sum < 0.8])))
+```
