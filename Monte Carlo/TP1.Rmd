@@ -173,7 +173,7 @@ g <- function(x,mean,sd){
 x = numeric(0)
 while (length(x) < n) {
   U <- runif(1)
-  X <- rnorm(1,mean,b)
+  X <- rnorm(1,mean,sd)
   x <- append(x, X[U <= (f(X, b, mean, sd) / (M * g(X, mean, sd)))])
 }
 
@@ -186,25 +186,23 @@ lines(t, f(t, b, mean, sd), col=rgb(180/255, 50/255, 213/255))
 ```{r}
 
 f2 <- function(x,b,lam){
-  return(-lam * exp(-lam*(x-b))*(x>=b))
+  return(lam * exp(-lam*(x-b))*(x>=b))
 }
 
 n <- 10000
-mean <- 0
-sd <- 2
 b <- 2
-lam <- 2
+lam <- 1
 
 M2 <- exp(lam*b)
-g2 <- function(x,b,lam){
-  return(rexp(lam)+b)
+g2 <- function(x,lam){
+  return(lam * exp(-lam*x))
 }
 
 x = numeric(0)
 while (length(x) < n) {
   U <- runif(1)
-  X <- rnorm(1,mean,b)
-  x <- append(x, X[U <= (f2(X, b, lam) / (M2 * g2(X, b, lam)))])
+  X <- rexp(1,lam)
+  x <- append(x, X[U <= (f2(X, b, lam) / (M2 * g2(X, lam)))])
 }
 
 t <- seq(b,8,0.01)
@@ -213,7 +211,39 @@ hist(x, freq = FALSE, breaks = 50)
 lines(t, f2(t,b,lam), col=rgb(180/255, 50/255, 213/255))
 ```
 
+Exercice 9:
 
+Methode 1:
+
+```{r}
+pi1 <- function(n){
+  U <- runif(n)
+  return(4/n * sqrt(1 - U**2))
+}
+```
+
+Methode 2:
+
+```{r}
+pi2 <- function(n){
+  U1 <- runif(n)
+  U2 <- runif(n)
+  return(4/n * (U1**2 - U**2)<=1)
+}
+```
+
+Comparaison de methodes:
+
+```{r}
+m <- 1000
+n <- 150000
+
+samp1 <- replicate(m,pi1(n))
+samp2 <- replicate(m,pi2(n))
+
+cat(sprintf("La moyenne par la methode 1 est %s et la variance est %s",mean(samp1),var(samp1)))
+cat(sprintf("La moyenne par la methode 2 est %s et la variance est %s",mean(samp2),var(samp2)))
+```
 
 
 
