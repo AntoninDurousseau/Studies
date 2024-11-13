@@ -1,0 +1,422 @@
+---
+title: "TP1"
+output: html_document
+date: "2024-09-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Exercise 1 : Uniform
+
+```{r}
+X <- runif(10000)
+X <- 5*(X<=0.4) + 6*(0.4<X & X<=0.6) + 7*(0.6<X & X<=0.9) + 8*(0.9<X)
+
+Y <- table(X)
+V <- c(0.4,0.2,0.3,0.1)
+
+barplot(Y/length(X)) & barplot(V, col = 'red')
+```
+
+Exercise 2 : Exponential distribution and related distributions
+
+1)
+
+```{r}
+n <- 10000
+Y <- runif(n)
+X <- -1/2 * log(1-Y)
+hist(X, breaks = 100,freq = FALSE,col='red')
+qqplot(X,rexp(n,2))
+```
+2)
+
+```{r}
+lambda <- 1.5
+n <- 10000
+Sn <- numeric(n)
+
+for (i in 1:n){
+  p <- 1
+  X <- -1/lambda * log(1- runif(10))
+  Sn[i] <- sum(X)
+}
+hist(Sn, breaks = 50,freq = FALSE)
+curve(dgamma(x,shape = 10,rate = lambda),add = TRUE, col = "red")
+```
+3)
+
+```{r}
+lambda <- 4
+n <- 10000
+Sn <- numeric(n)
+
+for (i in (1:n)){
+  p <- 1
+  X <- -1/lambda * log(1- runif(1))
+  while(X<=1){
+    p <- p+1
+    X <- X - 1/lambda * log(1- runif(1))
+  }
+  Sn[i] <- p
+  p <- 1
+}
+hist(Sn,freq = FALSE)
+```
+
+
+Exercise 3 : Box Muller Algo
+
+```{r}
+BM <- function(n){
+  U1 = runif(n)
+  U2 = runif(n)
+  return(c(sqrt(-2*log(U1)) * cos(2*pi*U2),sqrt(-2*log(U1)) * sin(2*pi*U2)))
+}
+
+hist(BM(10000), freq = FALSE, breaks = 100) 
+curve(dnorm(x),add = TRUE, col = 'red')
+```
+
+Exercise 5 : Simulation of Brownian Motion
+
+```{r}
+n <- 1:1110
+
+W0 <- 0
+Brownian <- function(i) {
+ return( (i >= 1 & i <= 100)*(i/100) + (i>=101 & i<=110)*(1 + (i-100)/10) + (i>=111 & i<=1110)*(2 + (i-110)/1000) ) 
+}
+
+t <- Brownian(n)
+W <- W0 + sqrt(t) * rnorm(1110)
+plot(t,W,type= "o")
+```
+Exercise 6 : Rejection - A First Example
+
+```{r}
+n = 10000
+f <- function(x){
+  return(2/pi * sqrt(1-x**2) * (-1<=x & x <= 1))
+}
+
+M <- 4/pi
+g <- function(x){
+  return(1/2 * (-1<=x & x <= 1))
+}
+
+Y = NULL
+while (length(Y) < n) {
+  U <- runif(n)
+  X <- runif(n,-1,1)
+  fx <- f(X)
+  gx <- g(X)
+  Y <-append( Y , X[U <= fx/(M * gx)])
+}
+
+t <- seq(-1,1,1/n)
+
+
+hist(Y, freq = FALSE)
+lines(t,f(t),col="red")
+```
+
+Exercise 7 : Rejection
+
+```{r}
+n = 10000
+f <- function(x,y){
+  return(1/pi * (x**2+y**2 <= 1))
+}
+
+M <- 4/pi
+g <- function(x,y){
+  return(1/4 * (-1<=x & x <= 1) * (-1<=y & y <= 1))
+}
+
+x <- NULL
+y <- NULL
+
+while (length(x) < n) {
+  U <- runif(1)
+  X <- runif(1,-1,1)
+  Y <- runif(1,-1,1)
+  fx <- f(X,Y)
+  gx <- g(X,Y)
+  x <-append(x , X[U <= fx/(M * gx)])
+  y <-append(y , Y[U <= fx/(M * gx)])
+}
+
+plot(x,y)
+```
+
+
+Exercise 8 - a : Truncated Normal Distribution
+
+```{r}
+
+f <- function(x,b,mean,sd){
+  return(
+    1/(sqrt(2*pi*sd**2)*pnorm((mean - b)/sd))*exp(-1/2 * (mean - x)^2/sd**2) * (x>=b))
+}
+
+n <- 10000
+mean <- 0
+sd <- 2
+b <- 2
+
+M <- 1/pnorm((mean - b)/sd)
+g <- function(x,mean,sd){
+  return(1/sqrt(2*pi*sd**2)*exp(-1/2 * (mean - x)^2/sd**2))
+}
+
+x = numeric(0)
+while (length(x) < n) {
+  U <- runif(1)
+  X <- rnorm(1,mean,sd)
+  x <- append(x, X[U <= (f(X, b, mean, sd) / (M * g(X, mean, sd)))])
+}
+
+t <- seq(b,8,0.01)
+
+hist(x, freq = FALSE, breaks = 50)
+lines(t, f(t, b, mean, sd), col=rgb(180/255, 50/255, 213/255))
+```
+
+Exercise 8 - b : Truncated Exponential Distribution
+
+```{r}
+
+f2 <- function(x,b,lam){
+  return(lam * exp(-lam*(x-b))*(x>=b))
+}
+
+n <- 10000
+b <- 2
+lam <- 1
+
+M2 <- exp(lam*b)
+g2 <- function(x,lam){
+  return(lam * exp(-lam*x))
+}
+
+x = numeric(0)
+while (length(x) < n) {
+  U <- runif(1)
+  X <- rexp(1,lam)
+  x <- append(x, X[U <= (f2(X, b, lam) / (M2 * g2(X, lam)))])
+}
+
+t <- seq(b,8,0.01)
+
+hist(x, freq = FALSE, breaks = 50)
+lines(t, f2(t,b,lam), col=rgb(180/255, 50/255, 213/255))
+```f <- function(x,b,mean,sd){
+  return(
+    1/(sqrt(2*pi*sd**2)*pnorm((mean - b)/sd))*exp(-1/2 * (mean - x)^2/sd**2) * (x>=b))
+}
+
+n <- 10000
+mean <- 0
+sd <- 2
+b <- 2
+
+M <- 1/pnorm((mean - b)/sd)
+g <- function(x,mean,sd){
+  return(1/sqrt(2*pi*sd**2)*exp(-1/2 * (mean - x)^2/sd**2))
+}
+
+x = numeric(0)
+while (length(x) < n) {
+  U <- runif(1)
+  X <- rnorm(1,mean,sd)
+  x <- append(x, X[U <= (f(X, b, mean, sd) / (M * g(X, mean, sd)))])
+}
+
+t <- seq(b,8,0.01)
+
+hist(x, freq = FALSE, breaks = 50)
+lines(t, f(t, b, mean, sd), col=rgb(180/255, 50/255, 213/255))
+
+Exercise 9 : Estimation of Pi
+
+Methode 1:
+
+```{r}
+pi1 <- function(n){
+  U <- runif(n)
+  return(4/n * sum(sqrt(1 - U**2)))
+}
+```
+
+Methode 2:
+
+```{r}
+pi2 <- function(n){
+  U1 <- runif(n)
+  U2 <- runif(n)
+  return(4/n * sum((U1**2 - U**2)<=1))
+}
+```
+
+Comparaison de methodes:
+
+```{r}
+n <- 1000
+m <- 15e4
+
+sample_1 <- replicate(n, pi1(m))
+sample_2 <- replicate(n, pi2(m))
+
+cat(sprintf("[Methode 1] Mean: %s. Variance: %s \n", mean(sample_1), var(sample_1)))
+cat(sprintf("[Methode 2] Mean: %s. Variance: %s", mean(sample_2), var(sample_2)))
+```
+
+Exercice 10 : Integral Calculation
+
+```{r}
+fY <- function(y){
+  return(1/(2*sqrt(pi)) * exp(-y^2/4) *(2 <= y))
+}
+
+fX <- function(x){
+  return(1/5 * (0 <= x & x <= 5))
+}
+
+h <- function(x,y){
+  return(10 * sqrt(pi) * sqrt(x+y) * sin(y^4) * exp(-3*x/2) * fX(x) * fY(y))
+}
+
+n <- 10000
+X <- runif(n,0,5)
+Y <- rnorm(n,0,2)
+Y[Y <= 2] <- 0
+
+delta <- mean(h(X,Y))
+```
+
+```{r}
+fY_2 <- function(y){
+  return(1/(2*sqrt(pi)) * exp(-y^2/4) * (2 <= y))
+}
+
+fX_2 <- function(x){
+  return(3/2 * exp(-3*x/2))
+}
+
+h <- function(x,y){
+  return(4*sqrt(pi)/3 * sqrt(x+y) * sin(y^4) * fX_2(x) * fY_2(y))
+}
+
+n <- 10000
+X <- rexp(n,3/2)
+Y <- rnorm(n,0,2)
+Y[Y <= 2] <- 0
+X[X >= 5] <- 0
+
+delta2 <- mean(h(X,Y))
+```
+
+```{r}
+delta 
+delta2
+```
+
+Exercice 11:
+
+```{r}
+n <- 10000
+
+a <- 50
+k <- 5
+
+h <-function(x){
+  return(x>=50)
+}
+
+f <- function(x){
+  return(1/(pi*(1+x^2)))
+}
+
+G_inv <- function(x){
+  return(a/(1-x)^(1/k))
+}
+
+g <- function(x){
+  return((k*a^k/x^(k+1))*(x>=a))
+}
+
+#classical Monte Carlo:
+
+X1 <- rcauchy(n,0,1)
+
+p1 <- h(X1)
+cat(sprintf("Monte Carlo method : mean is %f and var is %f \n", mean(p1),var(p1)))
+
+#importance sampling :
+  
+X2 <- G_inv(runif(n))
+
+p2 <- f(X2)/g(X2) * h(X2)
+cat(sprintf("Induction method : mean is %f and var is %f", mean(p2),var(p2)))
+```
+
+The classical Monte Carlo method is less effective than the important sampling method.
+
+Exercice 12:
+
+```{r}
+n <- 10000
+lam <- 2
+
+f <- function(x,y){
+  return(3/2 * exp(- 3/2 * x) * 1/(2*sqrt(pi)) * exp(-y^2/4))
+}
+
+g <- function(x,y,lam){
+  return(3/2 * exp(- 3/2 * x) * lam * exp(-lam * (y - 2)))
+}
+
+h <- function(x,y){
+  return((4*sqrt(pi))/3 * sqrt(x+y) * sin(y^4) * f(x,y))
+}
+
+X <- rexp(n,3/2)
+Y <- rexp(n,lam) + 2
+Y[Y <= 2] <- 0
+X[X >= 5] <- 0
+X[X >= 0] <- 0 
+
+p <- f(X,Y)/g(X,Y,lam) * h(X,Y)
+cat(sprintf("Induction method : mean is %f and var is %f", mean(p),var(p)))
+
+```
+
+Exercice 13:
+
+```{r}
+n <- 10000
+
+h <-function(x){
+  return(x >= 2)
+}
+
+f <- function(x,y){
+  return(3/2 * exp(-3/2 * x - y))
+}
+
+#classical Monte Carlo:
+
+X1 <- rnorm(n,0,1)
+p1 <- h(X1)
+
+X2 <- rexp(n,1)
+p2 <- h(X2)
+
+cat(sprintf("First estimator by Monte Carlo method : mean is %f and var is %f \n", mean(p1),var(p1)))
+cat(sprintf("Second estimator by Monte Carlo method : mean is %f and var is %f \n", mean(p2),var(p2)))
+```
+
+

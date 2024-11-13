@@ -1,0 +1,69 @@
+
+Question 0 :
+
+```{r}
+library(dplyr)
+health <- read.table("health.txt",header=TRUE, sep=" ", dec=".")
+health <- health[2:5]
+print(health)
+```
+
+Question 1 :
+
+```{r}
+library(dplyr)
+library(corrplot)
+correlation_matrix<-cor(health)
+corrplot(correlation_matrix, order = 'hclust',addrect = 3)
+```
+
+
+Question 2 :
+
+```{r}
+y <-lm(y~.,data=health)
+
+library(car)
+library(ggfortify)
+autoplot(y,1)         #P1 assumption
+```
+We can see that the blue line isautoplot(y,1)  not a line horizontal and close to 0. So assumption P1 is not satisfied.
+
+```{r}
+autoplot(y,3)         #P2 assumption
+```
+We can see that the blue line is not aligned around 1. So assumption P1 is not satisfied.
+
+```{r}
+set.seed(0)
+durbinWatsonTest(y)   #P3 assumption 
+```
+
+We can see that the p-value is greater than 5%, so we don't reject H0. So assumption P3 is satisfied.
+
+```{r}
+autoplot(y,2)       #P4 assumption 
+```
+
+We can see that the points fall approximately along a strait line (y=x) but we have some points that are far from this line. So assumption P4 is not satisfied.
+
+Question 3:
+```{r}
+library(GGally)
+ggpairs(health, progress = F)
+```
+We can see that there is a quadratic relation with age in function of y, age = sqrt(y).
+
+```{r}
+health2 <- health
+health2$agesqrt <- health$age^2
+health2 <- health2[1:24,]
+
+y2 <- lm(y~.,data=health2)
+
+autoplot(y2,1)
+autoplot(y2,3)
+durbinWatsonTest(y2)
+autoplot(y2,2) 
+```
+
