@@ -1,0 +1,102 @@
+---
+title: "TP3"
+output: html_notebook
+---
+```{r}
+library(dplyr)
+library(rmarkdown)
+library(corrplot)
+library(ggplot2)
+library(ggfortify)
+library(car)
+```
+
+
+```{r}
+ozone <- read.csv("ozone.txt",header = T, sep = "", dec = "." )
+ozone$vent <- as.factor(ozone$vent)
+ozone$temps <- as.factor(ozone$temps)
+```
+
+```{r}
+mod <- lm(maxO3 ~ T12,data = ozone )
+summary(mod)
+```
+```{r}
+autoplot(mod,1:4)
+durbinWatsonTest(mod)
+```
+
+D'après les sorties de la régression linéaire simple, on a que les assumption sont valide.
+
+```{r}
+mod_vent <- lm(maxO3 ~ vent , data = ozone)
+mod_temps <- lm(maxO3 ~ temps, data = ozone)
+mod_both <- lm(maxO3 ~ temps  vent , data = ozone)
+```
+
+```{r}
+summary(mod_vent)
+```
+
+```{r}
+autoplot(mod_temps,1:4)
+durbinWatsonTest(mod_temps)
+```
+```{r}
+summary(mod_temps)
+```
+
+```{r}
+autoplot(mod_vent,1:4)
+durbinWatsonTest(mod_vent)
+```
+```{r}
+summary(mod_both)
+```
+
+```{r}
+autoplot(mod_both,1:4)
+durbinWatsonTest(mod_both)
+```
+
+```{r}
+mod_all <- lm(maxO3 ~., data = ozone)
+summary(mod_all)
+```
+
+```{r}
+autoplot(mod_all,1:4)
+durbinWatsonTest(mod_all)
+
+```
+
+```{r}
+ggpairs(ozone, progress = F)
+```
+```{r}
+library(MASS)
+modForw <- stepAIC(mod_all, maxO3 ~ maxO3 + T9 + T12 + T15 + Ne9 + Ne12 + Ne15 + Vx9 + Vx12 + Vx15 + maxO3v + vent + temps,trace=F, direction=c("forward"))
+summary(modForw)
+```
+```{r}
+library(MASS)
+modBack <- stepAIC(mod_all, maxO3 ~. ,trace=F, direction=c("backward"))
+summary(modBack)
+```
+
+```{r}
+library(MASS)
+modBoth <- stepAIC(mod_all, maxO3 ~ maxO3 + T9 + T12 + T15 + Ne9 + Ne12 + Ne15 + Vx9 + Vx12 + Vx15 + maxO3v + vent + temps ,trace=F, direction=c("both"))
+summary(modBoth)
+```
+```{r}
+AIC(modForw,modBack,modBoth)
+```
+
+```{r}
+new <- data.frame(T12=18, Ne9=3, Vx9=0.7, maxO3v=85)
+
+predict(modBack, new, interval = "confidence")
+```
+

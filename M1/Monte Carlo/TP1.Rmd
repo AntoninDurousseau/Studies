@@ -8,7 +8,7 @@ date: "2024-09-11"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Exercise 1 : Uniform
+# Exercise 1 : Uniform
 
 ```{r}
 X <- runif(10000)
@@ -20,9 +20,9 @@ V <- c(0.4,0.2,0.3,0.1)
 barplot(Y/length(X)) & barplot(V, col = 'red')
 ```
 
-Exercise 2 : Exponential distribution and related distributions
+# Exercise 2 : Exponential distribution and related distributions
 
-1)
+1)  
 
 ```{r}
 n <- 10000
@@ -31,7 +31,8 @@ X <- -1/2 * log(1-Y)
 hist(X, breaks = 100,freq = FALSE,col='red')
 qqplot(X,rexp(n,2))
 ```
-2)
+
+2)  
 
 ```{r}
 lambda <- 1.5
@@ -46,7 +47,8 @@ for (i in 1:n){
 hist(Sn, breaks = 50,freq = FALSE)
 curve(dgamma(x,shape = 10,rate = lambda),add = TRUE, col = "red")
 ```
-3)
+
+3)  
 
 ```{r}
 lambda <- 4
@@ -66,8 +68,7 @@ for (i in (1:n)){
 hist(Sn,freq = FALSE)
 ```
 
-
-Exercise 3 : Box Muller Algo
+# Exercise 3 : Box Muller Algo
 
 ```{r}
 BM <- function(n){
@@ -80,7 +81,7 @@ hist(BM(10000), freq = FALSE, breaks = 100)
 curve(dnorm(x),add = TRUE, col = 'red')
 ```
 
-Exercise 5 : Simulation of Brownian Motion
+# Exercise 5 : Simulation of Brownian Motion
 
 ```{r}
 n <- 1:1110
@@ -94,7 +95,8 @@ t <- Brownian(n)
 W <- W0 + sqrt(t) * rnorm(1110)
 plot(t,W,type= "o")
 ```
-Exercise 6 : Rejection - A First Example
+
+# Exercise 6 : Rejection - A First Example
 
 ```{r}
 n = 10000
@@ -123,7 +125,7 @@ hist(Y, freq = FALSE)
 lines(t,f(t),col="red")
 ```
 
-Exercise 7 : Rejection
+# Exercise 7 : Rejection
 
 ```{r}
 n = 10000
@@ -152,8 +154,9 @@ while (length(x) < n) {
 plot(x,y)
 ```
 
+# Exercise 8
 
-Exercise 8 - a : Truncated Normal Distribution
+## a : Truncated Normal Distribution
 
 ```{r}
 
@@ -185,7 +188,7 @@ hist(x, freq = FALSE, breaks = 50)
 lines(t, f(t, b, mean, sd), col=rgb(180/255, 50/255, 213/255))
 ```
 
-Exercise 8 - b : Truncated Exponential Distribution
+## b : Truncated Exponential Distribution
 
 ```{r}
 
@@ -213,7 +216,6 @@ t <- seq(b,8,0.01)
 
 hist(x, freq = FALSE, breaks = 50)
 lines(t, f2(t,b,lam), col=rgb(180/255, 50/255, 213/255))
-```f <- function(x,b,mean,sd){
   return(
     1/(sqrt(2*pi*sd**2)*pnorm((mean - b)/sd))*exp(-1/2 * (mean - x)^2/sd**2) * (x>=b))
 }
@@ -239,10 +241,11 @@ t <- seq(b,8,0.01)
 
 hist(x, freq = FALSE, breaks = 50)
 lines(t, f(t, b, mean, sd), col=rgb(180/255, 50/255, 213/255))
+```
 
-Exercise 9 : Estimation of Pi
+# Exercise 9 : Estimation of Pi
 
-Methode 1:
+## Methode 1:
 
 ```{r}
 pi1 <- function(n){
@@ -251,7 +254,7 @@ pi1 <- function(n){
 }
 ```
 
-Methode 2:
+## Methode 2:
 
 ```{r}
 pi2 <- function(n){
@@ -261,7 +264,7 @@ pi2 <- function(n){
 }
 ```
 
-Comparaison de methodes:
+## Comparaison de methodes:
 
 ```{r}
 n <- 1000
@@ -274,7 +277,7 @@ cat(sprintf("[Methode 1] Mean: %s. Variance: %s \n", mean(sample_1), var(sample_
 cat(sprintf("[Methode 2] Mean: %s. Variance: %s", mean(sample_2), var(sample_2)))
 ```
 
-Exercice 10 : Integral Calculation
+# Exercice 10 : Integral Calculation
 
 ```{r}
 fY <- function(y){
@@ -324,7 +327,7 @@ delta
 delta2
 ```
 
-Exercice 11:
+# Exercice 11:
 
 ```{r}
 n <- 10000
@@ -365,7 +368,7 @@ cat(sprintf("Induction method : mean is %f and var is %f", mean(p2),var(p2)))
 
 The classical Monte Carlo method is less effective than the important sampling method.
 
-Exercice 12:
+# Exercice 12:
 
 ```{r}
 n <- 10000
@@ -394,7 +397,7 @@ cat(sprintf("Induction method : mean is %f and var is %f", mean(p),var(p)))
 
 ```
 
-Exercice 13:
+# Exercice 13:
 
 ```{r}
 n <- 10000
@@ -418,5 +421,3 @@ p2 <- h(X2)
 cat(sprintf("First estimator by Monte Carlo method : mean is %f and var is %f \n", mean(p1),var(p1)))
 cat(sprintf("Second estimator by Monte Carlo method : mean is %f and var is %f \n", mean(p2),var(p2)))
 ```
-
-
