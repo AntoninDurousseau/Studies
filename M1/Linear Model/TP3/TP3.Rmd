@@ -5,98 +5,143 @@ output: html_notebook
 ```{r}
 library(dplyr)
 library(rmarkdown)
-library(corrplot)
+library(MASS)
 library(ggplot2)
+library(GGally)
 library(ggfortify)
 library(car)
 ```
 
 
 ```{r}
+#load the data 
 ozone <- read.csv("ozone.txt",header = T, sep = "", dec = "." )
 ozone$vent <- as.factor(ozone$vent)
 ozone$temps <- as.factor(ozone$temps)
 ```
 
 ```{r}
+#simple linear model maxO3 against T12
 mod <- lm(maxO3 ~ T12,data = ozone )
 summary(mod)
 ```
+
 ```{r}
+#simple linear regression 
 autoplot(mod,1:4)
 durbinWatsonTest(mod)
 ```
 
-D'après les sorties de la régression linéaire simple, on a que les assumption sont valide.
+By the simple linear regression, we have the assumption :
+  P[1] is validated as the blue line centered on 0
+  P[2] is validated as the blue line centered on 1
+  P[3] not validated as the Durbin Watson test p-value lower than 5%
+  P[4] is validated as QQ-plot aligned with y=x line 
+  
+The model is not well define
 
 ```{r}
-mod_vent <- lm(maxO3 ~ vent , data = ozone)
-mod_temps <- lm(maxO3 ~ temps, data = ozone)
-mod_both <- lm(maxO3 ~ temps  vent , data = ozone)
+#ANOVA model 
+mod_vent <- lm(maxO3 ~ vent , data = ozone) #maxO3 against vent
+mod_temps <- lm(maxO3 ~ temps, data = ozone)  #maxO3 against temps
+mod_both <- lm(maxO3 ~ temps * vent , data = ozone)  #maxO3 against temps and vent
 ```
+
+```{r}
+summary(mod_temps)
+```
+
+```{r}
+#ANOVA regression
+autoplot(mod_temps,1:4)
+durbinWatsonTest(mod_temps)
+```
+We have that non of the assumption is validates.
+
 
 ```{r}
 summary(mod_vent)
 ```
 
 ```{r}
-autoplot(mod_temps,1:4)
-durbinWatsonTest(mod_temps)
-```
-```{r}
-summary(mod_temps)
-```
-
-```{r}
+#ANOVA regression
 autoplot(mod_vent,1:4)
 durbinWatsonTest(mod_vent)
 ```
+We have that non of the assumption is validates.
+
 ```{r}
 summary(mod_both)
 ```
 
 ```{r}
+#ANOVA regression
 autoplot(mod_both,1:4)
 durbinWatsonTest(mod_both)
 ```
+We have that non of the assumption is validates.
+
 
 ```{r}
+#multiple linear model maxO3 against all co variables
 mod_all <- lm(maxO3 ~., data = ozone)
 summary(mod_all)
 ```
 
 ```{r}
+#multiple linear regression
 autoplot(mod_all,1:4)
 durbinWatsonTest(mod_all)
-
 ```
 
+By the simple linear regression, we have the assumption :
+  P[1] is validated as the blue line centered on 0
+  P[2] is validated as the blue line centered on 1
+  P[3] is validated as the Durbin Watson test p-value lower than 5%
+  P[4] is validated as QQ-plot aligned with y=x line 
+  
+The model is not well define, but there is to many variables, we will reduce it.
+
 ```{r}
+#graph of the possible correlation between co variables
 ggpairs(ozone, progress = F)
 ```
+
 ```{r}
-library(MASS)
+#model Forward by step AIC
 modForw <- stepAIC(mod_all, maxO3 ~ maxO3 + T9 + T12 + T15 + Ne9 + Ne12 + Ne15 + Vx9 + Vx12 + Vx15 + maxO3v + vent + temps,trace=F, direction=c("forward"))
 summary(modForw)
 ```
+It is the same model as the model with all variables.
+
 ```{r}
-library(MASS)
+#model Backward by step AIC
 modBack <- stepAIC(mod_all, maxO3 ~. ,trace=F, direction=c("backward"))
 summary(modBack)
 ```
 
+This method select the model maxO3 against T12,Ne9,Vx9 and maxO3v.
 ```{r}
-library(MASS)
+#model Both ward by step AIC
 modBoth <- stepAIC(mod_all, maxO3 ~ maxO3 + T9 + T12 + T15 + Ne9 + Ne12 + Ne15 + Vx9 + Vx12 + Vx15 + maxO3v + vent + temps ,trace=F, direction=c("both"))
 summary(modBoth)
 ```
+
+It is the same model as the backward model.
+
 ```{r}
+#Test the better model
 AIC(modForw,modBack,modBoth)
 ```
 
+The better model is the backward model as it has the lower AIC.
+
 ```{r}
+#implement new data
 new <- data.frame(T12=18, Ne9=3, Vx9=0.7, maxO3v=85)
 
+#test if the model well predict it 
 predict(modBack, new, interval = "confidence")
 ```
+The prediction fit with the interval of confidence, the model well predict data.
 
