@@ -1,0 +1,56 @@
+---
+title: "TP2"
+output: html_notebook
+date: "2024-11-13"
+---
+
+```{r}
+library(dplyr)
+library(rmarkdown)
+library(corrplot)
+library(ggplot2)
+```
+
+```{r}
+cepage <- read.csv("CepagesB.csv",header=TRUE, sep=";",dec = ",")
+cepage$Origine <- as.factor(cepage$Origine)
+cepage$Couleur <- as.factor(cepage$Couleur)
+```
+
+```{r}
+table(cepage$Couleur,cepage$Origine)
+```
+
+```{r}
+pH_Col <- tapply(cepage$pH,list(cepage$Couleur), mean)
+pH_Col
+```
+
+```{r}
+pH_Col_Ori <- tapply(cepage$pH,list(cepage$Couleur, cepage$Origine), mean)
+pH_Col_Ori
+```
+
+```{r}
+ggplot(cepage , aes(y=pH, x=AcTot , colour=Couleur))+
+geom_smooth(method = 'lm',se = F)+ geom_point()
+
+
+ggplot(cepage , aes(y=pH, x=AcTot , colour=Couleur ,fill=Couleur))+
+geom_boxplot(alpha=0.5, outlier.alpha=0)
+```
+
+```{r}
+ggplot(cepage , aes(y=pH, x=AcTot , colour=Origine))+
+geom_smooth(method = 'lm',se = F)+ geom_point()
+
+
+ggplot(cepage , aes(y=pH, x=AcTot , colour=Origine ,fill=Origine))+
+geom_boxplot(alpha=0.5, outlier.alpha=0)
+```
+
+```{r}
+full_mod <- lm(pH ~ Couleur,data = cepage)
+summary(full_mod)
+```
+

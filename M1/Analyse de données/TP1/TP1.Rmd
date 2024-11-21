@@ -1,0 +1,162 @@
+---
+title: "TP1"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(FactoMineR)
+```
+
+##Exercice 1:
+
+```{r}
+#creéation de notre tableau de données
+x <- c(1,2,3,4)
+
+#centre de gravité du nuage de points
+g <- mean(x)
+
+#tableau centré
+y <- x - g  
+
+#vérification de la nullinté de la moyenne du tableau centré
+print(mean(y) == 0)
+
+#transposé de y
+t(y)
+
+#norme au carré de y
+(y%*%y)
+```
+##Exercice 2:
+
+```{r}
+#Chargement et lectuture des données
+temp <- read.csv("temperature.csv", sep = ";", dec= ",",row.names=1)
+paged_table(temp)
+
+#matrice contenant nos données
+X <- as.matrix(temp)
+
+#tableau centré 
+Y <- X - rep(1,nrow(X)) %*% t(colMeans(X))
+
+#matrice variance
+V <- t(Y) %*% diag(1/nrow(Y), nrow = nrow(Y), ncol = nrow(Y)) %*% Y
+
+#valeurs propres et vecteurs propres
+eig <- eigen(V)
+vp <- eig$values
+VP <- eig$vectors
+
+#inertie totale du nuage
+I <- sum(vp)
+
+#taux d'inertie expliqué par les axes factoriels
+taux <- matrix(,nrow = nrow(V),ncol = 1)
+for (i in (1 : nrow(V))){
+  taux[i] = vp[i]/sum(vp)
+}
+
+#taux d'inertie expliqué par les plans factriels
+cumul <- matrix(,nrow = nrow(V),ncol = 1)
+for (i in (1 : nrow(V))){
+  cumul[i] = sum(vp[1:i])/sum(vp)
+}
+
+#composantes principales 
+P <- Y %*% VP
+
+#plot des individus sur les deux premiers axes factoriels 
+plot(P[,1:2])
+text(P[,1:2],row.names(P[,1:2]))
+axis(1,-10:10,pos=0,labels=FALSE)
+axis(2,-5:5,pos=0,labels=FALSE)
+
+#modification de P pour obtenir la carte de France
+C <- P[,1:2] %*% matrix(c(0,-1,1,0), nrow = 2 , ncol = 2)
+plot(C)
+text(C,row.names(C))
+axis(1,-10:10,pos=0,labels=FALSE)
+axis(2,-5:5,pos=0,labels=FALSE)
+
+#qualité de représentation les premiers axes factoriels
+QLT <- matrix(,nrow = nrow(P),ncol = ncol(P))
+for (i in (1:nrow(P))){
+  for (a in (1:ncol(P))){
+    QLT[i,a] <- sum((P[i,a])^2)/(t(Y[i,])%*% Y[i,])
+  }
+}
+
+#contribution relative aux premiers axes factoriels
+CTR <- matrix(,nrow = nrow(P),ncol = ncol(P))
+for (i in (1:nrow(P))){
+  CTR[i,] <- 1/nrow(Y) * (P[i,])^2 / vp * 100
+}
+```
+
+```{r}
+#conclution de l'ACP 
+info <- matrix(
+  c(round(eig$values,digits = 2),
+  round(100*taux,digits = 2),
+  round(100*cumul,digits = 2)),
+  nrow = length(eig$values),ncol = 3)
+rownames(info) <- c(colnames(Y))
+colnames(info) <- c("eigenvalue", "percentage of variance","cumulative percentage of variance")
+
+qlt <- matrix(round(QLT[,1:2],digits = 2),nrow = nrow(QLT),ncol = 2)
+rownames(qlt) <- c(rownames(Y))
+colnames(qlt) <- c("Dim1","Dim2")
+
+ctr <- matrix(round(CTR[,1:2],digits = 2),nrow = nrow(CTR),ncol = 2)
+rownames(ctr) <- c(rownames(Y))
+colnames(ctr) <- c("Dim1","Dim2")
+
+info
+qlt
+ctr
+```
+
+```{r}
+#Chargement,lectuture et ACP des données
+T1 <- read.csv("temperature.csv", sep = ";", dec= ",",row.names = 1)
+summary(T1)
+T1.pca <- PCA(T1)
+```
+```{r}
+#conclution de l'ACP et comparasion avec l'ACP précédente
+round(T1.pca$eig,2)
+round(T1.pca$ind$contrib[,1:2],2)
+round(T1.pca$ind$cos2[,1:2],2)
+```
+
+```{r}
+#Ajout de nouvelles données
+T2 <- as.matrix(T1)
+Amiens <-c( 3.1,3.8 ,6.7,9.5,12.8,15.8,17.6,17.6,15.5,11.1,6.8,4.2)
+T2 <-rbind(T2, Amiens)
+row.names(T2)[16]<-"Amiens"
+
+Moscow <- c(-9.2,-8,-2.5,5.9 ,12.8,16.8,18.4,16.6,11.2,4.9,-1.5,-6.2)
+T2 <-rbind(T2, Moscow)
+row.names(T2)[17]<-"Moscow"
+
+Marrakech<-c(11.3 ,12.8,15.8,18.1,21.2,24.7,28.6,28.6,25,20.9,15.9,12.1)
+T2 <-rbind(T2, Marrakech)
+row.names(T2)[18]<-"Marrakech"
+```
+
+```{r}
+#ACP sur le nouveau jeu de données
+T2.pca <- PCA(T2)
+```
+
+```{r}
+#conclution de la nouvelle ACP
+round(T2.pca$eig,2)
+round(T2.pca$ind$contrib[,1:2],2)
+round(T2.pca$ind$cos2[,1:2],2)
+```
+
