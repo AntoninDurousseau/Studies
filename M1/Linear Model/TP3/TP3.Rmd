@@ -5,98 +5,137 @@ output: html_notebook
 ```{r}
 library(dplyr)
 library(rmarkdown)
-library(corrplot)
+library(MASS)
 library(ggplot2)
+library(GGally)
 library(ggfortify)
 library(car)
 ```
 
 
 ```{r}
+#loading data set 
 ozone <- read.csv("ozone.txt",header = T, sep = "", dec = "." )
 ozone$vent <- as.factor(ozone$vent)
 ozone$temps <- as.factor(ozone$temps)
 ```
 
 ```{r}
+#simple linear model of maxO3 against T12
 mod <- lm(maxO3 ~ T12,data = ozone )
 summary(mod)
 ```
 ```{r}
+#simple linear regression of max03 against T12
 autoplot(mod,1:4)
 durbinWatsonTest(mod)
 ```
-
-D'après les sorties de la régression linéaire simple, on a que les assumption sont valide.
+By this regression we have that assumption:
+  P[1] is validated as the points centered around 0
+  P[2] is validated as the points centered around 1
+  P[3] is not validated as the Durbin Watson test are lower than 5%
+  P[4] is validated as the points are aligned with the line x=y
+  
+The model is not Gaussian 
 
 ```{r}
-mod_vent <- lm(maxO3 ~ vent , data = ozone)
-mod_temps <- lm(maxO3 ~ temps, data = ozone)
-mod_both <- lm(maxO3 ~ temps  vent , data = ozone)
+#ANOVA models
+mod_vent <- lm(maxO3 ~ vent , data = ozone)          #maxO3 against vent
+mod_temps <- lm(maxO3 ~ temps, data = ozone)         #maxO3 against temps
+mod_both <- lm(maxO3 ~ temps * vent , data = ozone)  #maxO3 against temps + vent + temps:vent
 ```
+
+```{r}
+summary(mod_temps)
+```
+
+```{r}
+#ANOVA regression of max03 against temps
+autoplot(mod_temps,1:4)
+durbinWatsonTest(mod_temps)
+```
+
+By this regression, non of the assumption is validated.
 
 ```{r}
 summary(mod_vent)
 ```
 
 ```{r}
-autoplot(mod_temps,1:4)
-durbinWatsonTest(mod_temps)
-```
-```{r}
-summary(mod_temps)
-```
-
-```{r}
+#ANOVA regression of max03 against vent
 autoplot(mod_vent,1:4)
 durbinWatsonTest(mod_vent)
 ```
+
+By this regression, non of the assumption is validated.
+
 ```{r}
 summary(mod_both)
 ```
 
 ```{r}
+#ANOVA regression of max03 against temps and vent
 autoplot(mod_both,1:4)
 durbinWatsonTest(mod_both)
 ```
 
+By this regression, non of the assumption is validated.
+
 ```{r}
-mod_all <- lm(maxO3 ~., data = ozone)
-summary(mod_all)
+#multiple linear model of max03 against all the co variables
+mod_full <- lm(maxO3 ~., data = ozone)
+summary(mod_full)
 ```
 
 ```{r}
-autoplot(mod_all,1:4)
-durbinWatsonTest(mod_all)
+#multiple linear regression of max03 against all the co variables
+autoplot(mod_full,1:4)
+durbinWatsonTest(mod_full)
+```
 
+By this regression we have that assumption:
+  P[1] is validated as the points centered around 0
+  P[2] is validated as the points centered around 1
+  P[3] is validated as the Durbin Watson test are greater than 5%
+  P[4] is validated as the points are aligned with the line x=y
+  
+The model is Gaussian 
+
+```{r}
+#test if we have interaction between co variables
+ggpairs(ozone, progress = FALSE)
 ```
 
 ```{r}
-ggpairs(ozone, progress = F)
-```
-```{r}
-library(MASS)
 modForw <- stepAIC(mod_all, maxO3 ~ maxO3 + T9 + T12 + T15 + Ne9 + Ne12 + Ne15 + Vx9 + Vx12 + Vx15 + maxO3v + vent + temps,trace=F, direction=c("forward"))
 summary(modForw)
 ```
+By the forward AIC method, we obtain the multiple linear model maxO3 against T9,T12,T15,Ne9,Ne12,Ne15,Vx9,Vx12,Vx15,maxO3v,ventNord,ventOuest,ventSud,tempsSec
+
 ```{r}
-library(MASS)
 modBack <- stepAIC(mod_all, maxO3 ~. ,trace=F, direction=c("backward"))
 summary(modBack)
 ```
+By the backward AIC method, we obtain the multiple linear model maxO3 against T12,Ne9,Vx9,maxO3v
 
 ```{r}
-library(MASS)
 modBoth <- stepAIC(mod_all, maxO3 ~ maxO3 + T9 + T12 + T15 + Ne9 + Ne12 + Ne15 + Vx9 + Vx12 + Vx15 + maxO3v + vent + temps ,trace=F, direction=c("both"))
 summary(modBoth)
 ```
-```{r}
-AIC(modForw,modBack,modBoth)
-```
+By the both ward AIC method, we obtain the same multiple linear model as the backward method
 
 ```{r}
+#test to know witch model is the best
+AIC(modForw,modBack)
+```
+We have that the backward method give a lower AIC than the forward method, so we select the backward model
+
+```{r}
+#set a new individual
 new <- data.frame(T12=18, Ne9=3, Vx9=0.7, maxO3v=85)
 
+#look is we can well predict this individual
 predict(modBack, new, interval = "confidence")
 ```
+The model well predict this new individual
 
