@@ -5,114 +5,117 @@ output: html_notebook
 
 ```{r}
 library(dplyr)
-library(car)
-library(ggfortify)
-library(GGally)
-library(ggplot2)
-library(rmarkdown)
 library(FactoMineR)
 ```
 
-```{r}
-x <- c(1,2,3,4)
-
-m <- mean(x)
-
-y <- x - m
-
-print(mean(y) == 0)
-
-t(y)
-
-(y%*%y)
-```
 
 ```{r}
+#Loading du data set
 temp <- read.csv("temperature.csv", sep = ";", dec= ",",row.names=1)
 paged_table(temp)
 
 X <- as.matrix(temp)
 
+#Tableau centré
 Y <- X - rep(1,nrow(X)) %*% t(colMeans(X))
 
+#Matrice variance
 V <- t(Y) %*% diag(1/nrow(Y), nrow = nrow(Y), ncol = nrow(Y)) %*% Y
 
+#Vecteur et valeur propre 
 eig <- eigen(V)
 vp <- eig$values
+VP <- eig$vectors
 
-
+#Inertie totale
 I <- sum(vp)
 
-taux <- matrix(,nrow = nrow(V),ncol = 1)
-for (i in (1 : nrow(V))){
-  taux[i] = vp[i]/sum(vp)
-}
+#taux d'inertie expliqué par les axes factoriels
+taux <- vp / I
 
 cumul <- matrix(,nrow = nrow(V),ncol = 1)
 for (i in (1 : nrow(V))){
   cumul[i] = sum(vp[1:i])/sum(vp)
 }
 
-VP <- eig$vectors[,1:2]
-
+#Composantes principales
 P <- Y %*% VP
 
-plot(P)
-text(P,row.names(P))
+#plot des individus sur le plan factoriel composé des deux premiers axes factoriels
+plot(P[,1:2])
+text(P[,1:2],row.names(P[,1:2]))
 axis(1,-10:10,pos=0,labels=FALSE)
 axis(2,-5:5,pos=0,labels=FALSE)
 
-C <- P %*% matrix(c(0,-1,1,0), nrow = 2 , ncol = 2)
+#renvercement pour obtenir une carte de la france
+C <- P[,1:2] %*% matrix(c(0,-1,1,0), nrow = 2 , ncol = 2)
 plot(C)
 text(C,row.names(C))
 axis(1,-10:10,pos=0,labels=FALSE)
 axis(2,-5:5,pos=0,labels=FALSE)
 
-QLT <- matrix(,nrow = nrow(P),ncol = ncol(P))
-for (i in (1:nrow(Y))){
-  QLT[i,1] <- sum((P[1]/(t(Y[i,])%*% Y[i,]))^2)
-  QLT[i,2] <- sum((P[2]/(t(Y[i,])%*% Y[i,]))^2)
+#Qualité de représentation des individue
+QLT <- as.matrix(P)
+for (i in (1:nrow(P))){
+  for (a in (1:ncol(P))){
+  QLT[i,a] <- P[i,a]^2 / (t(Y[i,])%*%Y[i,])
+  }
 }
 
-CTR <- 1/nrow(Y) * P^2 / vp[1:2]
+#contribution moyenne au premiers axes factoriels
+CTR <- 1/nrow(Y) * P[,1:2]^2 / vp[1:2]
 ```
 
 ```{r}
-matrix(c(round(eig$values,digits = 2),
+#Sortie de l'ACP 
+acp.temps <- matrix(c(round(eig$values,digits = 2),
 round(100*taux,digits = 2),
 round(100*cumul,digits = 2)),nrow = length(eig$values),ncol = 3)
+colnames(acp.temps) <- c("eigenvalue", "percentage of variance","cumulative percentage of variance")
+rownames(acp.temps) <- sprintf("comp %s",seq(1:12))
 
-round(CTR,digits = 2)
+CTR.out <- round(CTR*100,digits = 2)
+colnames(CTR.out) <- c("Dim.1","Dim.2")
+
+QLT.out <- round(QLT[,1:2]*100,2)
+colnames(QLT.out) <- c("Dim.1","Dim.2")
+
+acp.temps
+CTR.out
+QLT.out
+```
+
+
+```{r}
+Temps <- read.csv("temperature.csv", sep = ";", dec= ",",row.names = 1)
+summary(Temps)
+Temps.pca <- PCA(Temps)
 ```
 
 ```{r}
-round(T.pca$eig,2)
-round(T.pca$ind$dist,2)
-round(T.pca$ind$contrib[,1:2],2)
-round(T.pca$var$contrib[,1:2],2)
-```
-
-
-```{r}
-T=read.csv("temperature.csv", sep = ";", dec= ",",row.names = 1)
-summary(T)
-T.pca <- PCA(T)
-```
-
-```{r}
-"Amiens" <-c( 3.1,3.8 ,6.7,9.5,12.8,15.8,17.6,17.6,15.5,11.1,6.8,4.2)
-T<-rbind(T, Amiens)
-row.names(T)[16]<-"Amiens"
+Amiens <-c( 3.1,3.8 ,6.7,9.5,12.8,15.8,17.6,17.6,15.5,11.1,6.8,4.2)
+Temps2<-rbind(Temps, Amiens)
+row.names(Temps2)[16]<- "Amiens"
 
 Moscow<- c(-9.2,-8,-2.5,5.9 ,12.8,16.8,18.4,16.6,11.2,4.9,-1.5,-6.2)
-T<-rbind(T, Moscow)
-row.names(T)[17]<-"Moscow"
+Temps2 <-rbind(Temps2, Moscow)
+row.names(Temps2)[17]<- "Moscow"
 
 Marrakech<-c(11.3 ,12.8,15.8,18.1,21.2,24.7,28.6,28.6,25,20.9,15.9,12.1)
-T<-rbind(T, Marrakech)
-row.names(T)[18]<-"Marrakech"
+Temps2 <-rbind(Temps2, Marrakech)
+row.names(Temps2)[18]<-"Marrakech"
 
-T.pca <- PCA(T,ind.sup=16:18)
+Temps2.pca <- PCA(Temps2,ind.sup = c(16:18))
+```
+```{r}
+#Sortie de la première ACP FactoMiner
+round(Temps.pca$eig,2)
+round(Temps.pca$ind$contrib[,1:2],2)
+round(Temps.pca$ind$cos2[,1:2]*100,2)
 ```
 
-
+```{r}
+#Sortie de la deuxième ACP FactoMiner
+round(Temps2.pca$eig,2)
+round(Temps2.pca$ind$contrib[,1:2],2)
+```
