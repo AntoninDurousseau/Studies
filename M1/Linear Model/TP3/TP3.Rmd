@@ -121,6 +121,7 @@ summary(modBack)
 ```
 
 This method select the model maxO3 against T12,Ne9,Vx9 and maxO3v.
+
 ```{r}
 #model Both ward by step AIC
 modBoth <- stepAIC(mod_all, maxO3 ~ maxO3 + T9 + T12 + T15 + Ne9 + Ne12 + Ne15 + Vx9 + Vx12 + Vx15 + maxO3v + vent + temps ,trace=F, direction=c("both"))

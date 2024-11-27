@@ -216,9 +216,6 @@ t <- seq(b,8,0.01)
 
 hist(x, freq = FALSE, breaks = 50)
 lines(t, f2(t,b,lam), col=rgb(180/255, 50/255, 213/255))
-  return(
-    1/(sqrt(2*pi*sd**2)*pnorm((mean - b)/sd))*exp(-1/2 * (mean - x)^2/sd**2) * (x>=b))
-}
 
 n <- 10000
 mean <- 0
@@ -260,7 +257,7 @@ pi1 <- function(n){
 pi2 <- function(n){
   U1 <- runif(n)
   U2 <- runif(n)
-  return(4/n * sum((U1**2 - U**2)<=1))
+  return(4/n * sum((U1**2 + U**2)<=1))
 }
 ```
 
@@ -402,22 +399,50 @@ cat(sprintf("Induction method : mean is %f and var is %f", mean(p),var(p)))
 ```{r}
 n <- 10000
 
-h <-function(x){
-  return(x >= 2)
+h1 <-function(x){
+  return(sqrt(2*pi) * exp(-x**2 / 2) * (x <= 2) * (x >= 0))
 }
 
-f <- function(x,y){
-  return(3/2 * exp(-3/2 * x - y))
+h2 <- function(x){
+  return(2 * exp(-x**2))
 }
 
 #classical Monte Carlo:
 
 X1 <- rnorm(n,0,1)
-p1 <- h(X1)
+p1 <- h1(X1)
 
-X2 <- rexp(n,1)
-p2 <- h(X2)
+X2 <- runif(n,0,2)
+p2 <- h2(X2)
 
 cat(sprintf("First estimator by Monte Carlo method : mean is %f and var is %f \n", mean(p1),var(p1)))
 cat(sprintf("Second estimator by Monte Carlo method : mean is %f and var is %f \n", mean(p2),var(p2)))
 ```
+
+```{r}
+X3 <- - X1
+p3 <- h1(X3)
+cat(sprintf("Third estimator based on an antithetic variable : mean is %f and var is %f \n",(mean(p1) + mean(p3)) / 2 , (var(p1) + var(p3) + 2*cov(p1,p3))/4))
+
+X4 <- 2 - X2
+p4 <- h2(X4)
+cat(sprintf("Fourth estimator based on an antithetic variable : mean is %f and var is %f \n",(mean(p2) + mean(p4)) / 2 , (var(p2) + var(p4) + 2*cov(p2,p4))/4))
+```
+```{r}
+mu_k <- function(x,k){
+  return(2**k / (k+1))
+}
+
+ exp_serie <- function(x,k){
+   X <- vector(NA,length = k)
+   for (i in (0:k)){
+     X[i] <- x**i / i 
+   }
+   return(sum(X))
+ }
+ 
+ 
+```
+
+
+

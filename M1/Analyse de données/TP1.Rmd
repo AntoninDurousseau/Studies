@@ -6,6 +6,7 @@ output: html_notebook
 ```{r}
 library(dplyr)
 library(FactoMineR)
+library(rmarkdown)
 ```
 
 
@@ -118,4 +119,5 @@ round(Temps.pca$ind$cos2[,1:2]*100,2)
 #Sortie de la deuxième ACP FactoMiner
 round(Temps2.pca$eig,2)
 round(Temps2.pca$ind$contrib[,1:2],2)
+round(Temps2.pca$ind$cos2[,1:2]*100,2)
 ```
