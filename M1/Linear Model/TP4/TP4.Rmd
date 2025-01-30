@@ -1,0 +1,106 @@
+---
+title: "R Notebook"
+output: pdf_notebook
+---
+```{r}
+library(dplyr)
+library(rmarkdown)
+library(MASS)
+library(car)
+
+library(ggplot2)
+library(gridExtra)
+library(cowplot)
+library(plotly) # interactif plot
+library(ggfortify) # diagnostic plot
+library(forestmodel) # plot odd ratio
+library(arm) # binnedplot diagnostic plot in GLM
+
+
+library(knitr)
+library(dplyr)
+library(tidyverse)
+library(tidymodels)
+library(broom) # funtion augment to add columns to the original data that was modeled
+library(effects) # plot effect of covariate/factor
+library(questionr) # odd ratio
+
+
+library(lmtest) # LRtest
+library(survey) # Wald test
+library(vcdExtra) # deviance test
+
+
+library(rsample)   # for data splitting
+library(glmnet)
+library(nnet) # multinom, glm
+library(caret)
+library(ROCR)
+#library(PRROC) autre package pour courbe roc et courbe pr
+library(ISLR) # dataset for statistical learning
+```
+
+# Car purchase data
+
+```{r}
+car <- read.csv("car_income.txT", sep = "", header = TRUE)
+paged_table(car)
+```
+
+```{r}
+mod <- glm(purchase ~ income + age ,data = car, family = "binomial" )
+car %>%rmarkdown::paged_table()
+```
+
+```{r}
+p1 <- car %>%
+  ggplot(aes(income + age, purchase)) +
+  geom_point(alpha = .15) +
+  geom_smooth(method = "lm") +
+  ggtitle("Linear regression model fit") +
+  xlab("income + age") +
+  ylab("Probability of Default")
+
+p2 <- car %>%
+  ggplot(aes(income + age, purchase)) +
+  geom_point(alpha = .15) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  ggtitle("Logistic regression model fit") +
+  xlab("income + age") +
+  ylab("Probability of Default")
+
+subplot(ggplotly(p1), ggplotly(p2), nrows = 1)
+```
+
+```{r}
+car <- car %>%
+  mutate(old = ifelse(car$age > 3, 1, 0)) 
+
+car <- car %>%
+  mutate(riche = ifelse(car$income > 50,1,0))
+
+mod2 <- glm(purchase ~ income + age + old + riche ,data = car, family = "binomial" )
+summary(mod)
+summary(mod2)
+```
+# Diabetes in Prima Indians
+
+```{r}
+pima <- Pima.tr
+pima %>%rmarkdown::paged_table()
+```
+
+```{r}
+modall <- glm(type ~ npreg + glu + bp + skin + bmi + ped + age, data = pima, family = "binomial")
+modpima <- stepAIC(modall, type ~., trace = F, direction = "backward")
+modpima
+```
+
+```{r}
+pima.te <- Pima.
+pima.te$pred <- predict(modpima,newdata = pima.te,type = "response")
+pima.te$pred <- ifelse(pima.te$pred > 0.5, 1,0)
+pima.te$pred <- as.factor(pima.te$pred)
+```
+
+

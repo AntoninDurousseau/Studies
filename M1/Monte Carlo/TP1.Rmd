@@ -1,6 +1,6 @@
 ---
 title: "TP1"
-output: html_document
+output: pdf_document
 date: "2024-09-11"
 ---
 
@@ -22,7 +22,7 @@ barplot(Y/length(X)) & barplot(V, col = 'red')
 
 # Exercise 2 : Exponential distribution and related distributions
 
-1)  
+## 1)
 
 ```{r}
 n <- 10000
@@ -32,7 +32,7 @@ hist(X, breaks = 100,freq = FALSE,col='red')
 qqplot(X,rexp(n,2))
 ```
 
-2)  
+## 2)
 
 ```{r}
 lambda <- 1.5
@@ -48,7 +48,7 @@ hist(Sn, breaks = 50,freq = FALSE)
 curve(dgamma(x,shape = 10,rate = lambda),add = TRUE, col = "red")
 ```
 
-3)  
+## 3)
 
 ```{r}
 lambda <- 4
@@ -396,6 +396,8 @@ cat(sprintf("Induction method : mean is %f and var is %f", mean(p),var(p)))
 
 # Exercice 13:
 
+## 1)
+
 ```{r}
 n <- 10000
 
@@ -419,6 +421,8 @@ cat(sprintf("First estimator by Monte Carlo method : mean is %f and var is %f \n
 cat(sprintf("Second estimator by Monte Carlo method : mean is %f and var is %f \n", mean(p2),var(p2)))
 ```
 
+## 2)
+
 ```{r}
 X3 <- - X1
 p3 <- h1(X3)
@@ -428,21 +432,37 @@ X4 <- 2 - X2
 p4 <- h2(X4)
 cat(sprintf("Fourth estimator based on an antithetic variable : mean is %f and var is %f \n",(mean(p2) + mean(p4)) / 2 , (var(p2) + var(p4) + 2*cov(p2,p4))/4))
 ```
-```{r}
-mu_k <- function(x,k){
-  return(2**k / (k+1))
-}
 
- exp_serie <- function(x,k){
-   X <- vector(NA,length = k)
-   for (i in (0:k)){
-     X[i] <- x**i / i 
-   }
-   return(sum(X))
- }
- 
- 
+## 3)
+
+### a) moment of order k :
+
+```{r}
+mu_k <- function(k){
+  return(2**(k+1) / 2*(k+1))
+}
 ```
 
+### b) control variate :
 
+```{r}
+series_exp_k <- function(x,k){
+  X <- 1
+   for (i in (1:k)){
+     X <- X + ((-1)**i) * (x**(2*i) / factorial(i))
+   }
+   return(X)
+}
+```
 
+```{r}
+#finding k
+k <- 1
+eps <- 0.001
+
+series_exp_k(2,k+100)
+exp(2)
+#while (abs(series_exp_k(1,k) - exp(1)) > eps){
+  #k <- k + 1
+#}
+```

@@ -1,0 +1,11 @@
+---
+title: "TP1"
+output: pdf_document
+date: "2024-09-11"
+---
+
+We generate a sample $(X_n)_{n\in\mathbb{N}}$ iid by $f_X$ the PDF of $X$
+
+We choose all the $i = 1, \dots, n$ such that $X_i \in A$ and plug them in a new set $(Y_n)_{n \in \mathbb{N}}$
+
+Then, the mean of $Y_n$ simulate a random variable $X$ conditional to the event $X \in A$ with $A \subset \mathbb{R}$
