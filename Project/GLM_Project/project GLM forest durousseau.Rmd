@@ -108,11 +108,6 @@ hist(exam$y, breaks = 35, col='tan1',
      main = "Distribution of exam scores",
      xlab = "exam score")
 abline(v = mean(exam$y), col='red4', lwd = 3)
-
-
-boxplot(exam$y,
-        main = "exam scores",
-        ylab = "scores")
 ```
 
 ## Quantitative variables.
@@ -166,7 +161,6 @@ print(cat_tables)
 
 ```{r}
 library(dplyr)
-library(ggplot2)
 
 plots <- list()
 
@@ -203,8 +197,6 @@ print(plots)
 ### between variables.
 
 ```{r}
-library(dplyr)
-
 library(corrplot)
 
 correlation_matrix<-cor(num_vars)
@@ -279,7 +271,7 @@ ggplot(exam, aes(x = study_hrs, y = y, color = trav_time)) +
 ```
 
 ```{r}
-#For an interaction between two quantitative variables, we will categories one of them and do the same thing as before.
+#For an interaction between two quantitative variables, we will categorize one of them and do the same thing as before.
 
 ggplot(exam,aes(x = study_hrs,y = y,color = cut(sleep_hrs,breaks = c(4, 6, 8, 10),labels = c("Low", "Medium", "High")))) +geom_smooth(se = FALSE)
 ```
@@ -289,17 +281,12 @@ ggplot(exam,aes(x = study_hrs,y = y,color = cut(sleep_hrs,breaks = c(4, 6, 8, 10
 ```{r}
 #For an interaction between two categorical variables, we will calculate the averages and plot a graph based on them. We have also connected the points for better visualization.
 
-library(dplyr)
-
 plot_data <- exam %>%
   group_by(study_method, school_type) %>%
   summarise(
     mean_y = mean(y, na.rm = TRUE),
     .groups = "drop"
   )
-
-
-library(ggplot2)
 
 ggplot(plot_data,
        aes(x = study_method,
@@ -445,9 +432,7 @@ modboth
 ```{r}
 n <- length(train1$y)
 
-modbothBIC <- stepAIC(mod0,y~ attend_pct_cat + parent_educ+ study_hrs + sleep_qual +  trav_time + web_access + extra_act +sleep_hrs + school_type + study_method + age + sexe,data=train1,trace=F,k=log(n),direction=c('both'))
-
-modbothBIC
+stepAIC(mod0,y~ attend_pct_cat + parent_educ+ study_hrs + sleep_qual +  trav_time + web_access + extra_act +sleep_hrs + school_type + study_method + age + sexe,data=train1,trace=F,k=log(n),direction=c('both'))
 ```
 
 ### model without sexe, and comparation with full and step model.
@@ -457,7 +442,7 @@ modanova <- lm(y~ . -sexe,data = train1) #model derived from ANOVA
 
 namemod = c("modboth","modanova") #vector of anova name
 p_value1 = c(anova(modboth,modanova)$`Pr(>F)`[2],anova(modboth,modfull)$`Pr(>F)`[2]) #vector of p-values
-data.frame(namemod,p_value1) #table containing the p-values of the ANOVA's
+data.frame(namemod,p_value1) #table containing the p-values of the ANOVA
 
 AIC(modboth, modanova, modfull)
 ```
@@ -543,9 +528,9 @@ AIC(mod1, mod1bis,mod_1, mod_1bis, modfull)
 
 ```{r}
 Criterion = c("R ajusted for mod1","R ajusted for mod1bis","cp for mod_1", "cp for mod_1bis","R ajusted for mod1","R ajusted for mod1bis","cp for mod_1", "cp for mod_1bis" )
-R = c(summary(mod1)$adj.r.squared,summary(mod1bis)$adj.r.squared,summary(mod_1)$adj.r.squared,summary(mod_1bis)$adj.r.squared) #vector of criterion
+R = c(summary(mod1)$adj.r.squared,summary(mod1bis)$adj.r.squared,summary(mod_1)$adj.r.squared,summary(mod_1bis)$adj.r.squared) #vector of criteria
 
-#calcul of CP criterion
+#calculus of CP criteria
 n1 <- nrow(train)
 p1 <- length(coef(mod1))
 p2 <- length(coef(mod1bis))
@@ -568,7 +553,8 @@ data.frame(Criterion,value)
 ## Test of interactions suggest by the EDA.
 
 ```{r}
-mod00 <- lm(y~(sleep_c + sleep_c2) + attend_pct_cat + (study_c +study_c2) + trav_time + sleep_qual + study_method +extra_act+ parent_educ*school_type + web_access, data = train) #model to test the interaction parent education X school type
+#model to test the interaction parent education X school type
+mod00 <- lm(y~(sleep_c + sleep_c2) + attend_pct_cat + (study_c +study_c2) + trav_time + sleep_qual + study_method +extra_act+ parent_educ*school_type + web_access, data = train) 
 ```
 
 ### simple interations with study hours
