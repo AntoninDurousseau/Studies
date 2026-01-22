@@ -55,24 +55,24 @@ exam <- exam_full %>% dplyr::select(-id)
 exam <- exam %>%
   mutate(
     sexe = factor(sexe, levels = c(1,2,3), labels = c("Female","Male","Other")),
-    school_type = factor(school_type, levels = c(1,2), labels = c("Public","Private")),
-    parent_educ = factor(parent_educ, levels = 1:6,
-                         labels = c("No formal","High school","Graduate",
-                                    "Post graduate 1","Post graduate 2","PhD")),
-    sleep_qual = factor(sleep_qual, levels = c(1,2,3), labels = c("Poor","Average","Good"),
-                        ordered = TRUE),
-    web_access = factor(web_access, levels = c(1,2), labels = c("No","Yes")),
-    trav_time = factor(trav_time, levels = c(1,2,3,4),
-                       labels = c("<15 min","15–30 min","30–60 min",">60 min"),
-                       ordered = TRUE),
-    extra_act = factor(extra_act, levels = c(1,2), labels = c("No","Yes")),
-    study_method = factor(study_method, levels = 1:6,
-                          labels = c("Online videos","Coaching","Notes",
-                                     "Textbook","Group study","Mixed")),
-    agecat = factor(agecat, levels = c(1,2,3,4,5), labels = c("14-15","15-16","16-17","17-18","18-19")),
-    attend_pct_cat = factor(attend_pct_cat, levels = c(1,2,3,4), labels = c("50-62","62-72","72-81","81-100"))
     
-  )
+    school_type = factor(school_type, levels = c(1,2), labels = c("Public","Private")),
+    
+    parent_educ = factor(parent_educ, levels = 1:6,labels = c("No formal","High school","Graduate","Post graduate 1","Post graduate 2","PhD")),
+    
+    sleep_qual = factor(sleep_qual, levels = c(1,2,3), labels = c("Poor","Average","Good"), ordered = TRUE),
+    
+    web_access = factor(web_access, levels = c(1,2), labels = c("No","Yes")),
+    
+    trav_time = factor(trav_time, levels = c(1,2,3,4),labels = c("<15 min","15–30 min","30–60 min",">60 min"),ordered = TRUE),
+    
+    extra_act = factor(extra_act, levels = c(1,2), labels = c("No","Yes")),
+    
+    study_method = factor(study_method, levels = 1:6,labels = c("Online videos","Coaching","Notes","Textbook","Group study","Mixed")),
+    
+    agecat = factor(agecat, levels = c(1,2,3,4,5), labels = c("14-15","15-16","16-17","17-18","18-19")),
+    
+    attend_pct_cat = factor(attend_pct_cat, levels = c(1,2,3,4), labels = c("50-62","62-72","72-81","81-100")))
 
 
 paged_table(exam)
@@ -118,17 +118,16 @@ boxplot(exam$y,
 ## Quantitative variables.
 
 ```{r}
-num_vars <- exam %>%
-  dplyr::select(where(is.numeric))
+num_vars <- exam %>% dplyr::select(where(is.numeric))   #select quantitative variables
 
-num_vars <- num_vars %>% dplyr::select(-y)
+num_vars <- num_vars %>% dplyr::select(-y) #we remove the numerical variables
 summary(num_vars)
 
 library(ggplot2)
 
 plots_num <- list()
 
-for (var in names(num_vars)) {
+for (var in names(num_vars)) { #For each quantitative variable, we plot a graph of the exam score as a function of the variable, adding the observations of the variables, the loses curve, and the associated linear curve.
   
   p <- ggplot(exam,
               aes(x = .data[[var]], y = y)) +
@@ -150,21 +149,16 @@ print(plots_num)
 ## Quatitative factors.
 
 ```{r}
-cat_vars <- exam %>%
-  dplyr::select(where(is.factor))
+cat_vars <- exam %>% dplyr::select(where(is.factor)) #we select the categorical variables
 
 cat_tables <- list()
 
-for (var in names(cat_vars)) {
+for (var in names(cat_vars)) { #For each categorical variable, create a table in which you count the observations by category and the proportion of that category for the variable.
   
   tab <- table(cat_vars[[var]])
   prop <- round(100 * prop.table(tab), 1)
   
-  cat_tables[[var]] <- data.frame(
-    Category = names(tab),
-    Count = as.vector(tab),
-    Proportion = as.vector(prop)
-  )
+  cat_tables[[var]] <- data.frame(Category = names(tab), Count = as.vector(tab), Proportion = as.vector(prop))
 }
 
 print(cat_tables)
@@ -177,7 +171,7 @@ library(ggplot2)
 plots <- list()
 
 for (var in names(cat_vars)) {
-  
+  #For each categorical variable, we will create a box plot with the exam score, display the observations, means and medians.
   p <- ggplot(exam,
               aes(x = .data[[var]],
                   y = y,
@@ -257,6 +251,8 @@ exam %>%
 ```
 
 ```{r}
+#For each interaction between two variables (one quantitative and one categorical) of interest expressed in the ADE, we visualize the exam graph as a function of the quantitative variable and stratify by the categorical variable.
+
 ggplot(exam, aes(x = sleep_hrs, y = y, color = trav_time)) +
   geom_smooth(method = "loess", se = FALSE)
 
@@ -280,13 +276,19 @@ ggplot(exam, aes(x = sleep_hrs, y = y, color = attend_pct_cat)) +
 
 ggplot(exam, aes(x = study_hrs, y = y, color = trav_time)) +
   geom_smooth(method = "loess", se = FALSE)
+```
 
+```{r}
+#For an interaction between two quantitative variables, we will categories one of them and do the same thing as before.
 
 ggplot(exam,aes(x = study_hrs,y = y,color = cut(sleep_hrs,breaks = c(4, 6, 8, 10),labels = c("Low", "Medium", "High")))) +geom_smooth(se = FALSE)
 ```
+
 ### choice between categorical or numerical variables for redundant variables.
 
 ```{r}
+#For an interaction between two categorical variables, we will calculate the averages and plot a graph based on them. We have also connected the points for better visualization.
+
 library(dplyr)
 
 plot_data <- exam %>%
@@ -313,18 +315,12 @@ ggplot(plot_data,
     color = "School type"
   )
 
-
-
-
 plot_data1 <- exam %>%
   group_by(attend_pct_cat, sleep_qual) %>%
   summarise(
     mean_y = mean(y, na.rm = TRUE),
     .groups = "drop"
   )
-
-
-library(ggplot2)
 
 ggplot(plot_data1,
        aes(x = attend_pct_cat,
@@ -340,16 +336,12 @@ ggplot(plot_data1,
     color = "sleep_qual"
   )
 
-
 plot_data2 <- exam %>%
   group_by(sleep_qual, extra_act) %>%
   summarise(
     mean_y = mean(y, na.rm = TRUE),
     .groups = "drop"
   )
-
-
-library(ggplot2)
 
 ggplot(plot_data2,
        aes(x = sleep_qual,
@@ -365,16 +357,12 @@ ggplot(plot_data2,
     color = "extra act"
   )
 
-
 plot_data3 <- exam %>%
   group_by(parent_educ, school_type) %>%
   summarise(
     mean_y = mean(y, na.rm = TRUE),
     .groups = "drop"
   )
-
-
-library(ggplot2)
 
 ggplot(plot_data3,
        aes(x = parent_educ,
@@ -390,12 +378,13 @@ ggplot(plot_data3,
     color = "school type"
   )
 ```
+
 ## Final data set. 
 
 ```{r}
-exam_top <- exam %>% dplyr::select(-agecat, -attend_pct)
+exam_top <- exam %>% dplyr::select(-agecat, -attend_pct) #Remove the attendance categorical and age categorical variables.
 
-dim(exam_top)
+dim(exam_top) #we check the dimension
 ```
 
 # Building regression models.
@@ -427,9 +416,9 @@ criteria use :  nested model
 ### model reduse and full. 
 
 ```{r}
-mod0<- lm(y~1,data = train1)
+mod0<- lm(y~1,data = train1) #model reduce to the intercept
 
-modfull <- lm(y~ .,data = train1)
+modfull <- lm(y~ .,data = train1) #full model
 ```
 
 ### Type I and II on the full model.
@@ -439,7 +428,7 @@ anova(modfull)
 ```
 
 ```{r}
-library(carData)
+library(car)
 Anova(modfull)
 ```
 
@@ -448,7 +437,7 @@ Anova(modfull)
 ```{r}
 library(MASS)
 
-modboth <- stepAIC(mod0,y~ attend_pct_cat + parent_educ+ study_hrs + sleep_qual +  trav_time + web_access + extra_act +sleep_hrs + school_type + study_method + age + sexe,data=train1,trace=T,direction=c('both'))
+modboth <- stepAIC(mod0,y~ attend_pct_cat + parent_educ+ study_hrs + sleep_qual +  trav_time + web_access + extra_act +sleep_hrs + school_type + study_method + age + sexe,data=train1,trace=T,direction=c('both'))  #model with AIC both direction
 
 modboth
 ```
@@ -456,17 +445,19 @@ modboth
 ```{r}
 n <- length(train1$y)
 
-stepAIC(mod0,y~ attend_pct_cat + parent_educ+ study_hrs + sleep_qual +  trav_time + web_access + extra_act +sleep_hrs + school_type + study_method + age + sexe,data=train1,trace=F,k=log(n),direction=c('both'))
+modbothBIC <- stepAIC(mod0,y~ attend_pct_cat + parent_educ+ study_hrs + sleep_qual +  trav_time + web_access + extra_act +sleep_hrs + school_type + study_method + age + sexe,data=train1,trace=F,k=log(n),direction=c('both'))
+
+modbothBIC
 ```
 
 ### model without sexe, and comparation with full and step model.
 
 ```{r}
-modanova <- lm(y~ . -sexe,data = train1)
+modanova <- lm(y~ . -sexe,data = train1) #model derived from ANOVA
 
-namemod = c("modboth","modanova")
-p_value1 = c(anova(modboth,modanova)$`Pr(>F)`[2],anova(modboth,modfull)$`Pr(>F)`[2])
-data.frame(namemod,p_value1)
+namemod = c("modboth","modanova") #vector of anova name
+p_value1 = c(anova(modboth,modanova)$`Pr(>F)`[2],anova(modboth,modfull)$`Pr(>F)`[2]) #vector of p-values
+data.frame(namemod,p_value1) #table containing the p-values of the ANOVA's
 
 AIC(modboth, modanova, modfull)
 ```
@@ -474,21 +465,23 @@ AIC(modboth, modanova, modfull)
 ### test if we use sleephour^2 and study_hours^2 more than sleephour and study_hours.
 
 ```{r}
-m_sleep <- mean(train1$sleep_hrs, na.rm = TRUE)
+m_sleep <- mean(train1$sleep_hrs, na.rm = TRUE) #average of the sleep hour variable
 
+#we transform the variable in the train by centering it and adding the squared term
 train <- train1 %>%
   mutate(
     sleep_c  = sleep_hrs - m_sleep,
     sleep_c2 = sleep_c^2
   )
 
+#we transform the variable in the test by centering it and adding the squared term
 test <- test1 %>%
   mutate(
     sleep_c  = sleep_hrs - m_sleep,
     sleep_c2 = sleep_c^2
   )
 
-
+#we repeat for the variable study hours
 m_study <- mean(train1$study_hrs, na.rm = TRUE)
 
 train <- train %>%
@@ -507,6 +500,7 @@ test <- test %>%
 ## New train/test without sleephour and study_hours.
 
 ```{r}
+#we remove the extra variables
 train <- train %>% dplyr::select(-sleep_hrs)
 train <- train %>% dplyr::select(-study_hrs)
 
@@ -517,18 +511,23 @@ test <- test %>% dplyr::select(-study_hrs)
 ## New models on this new train data set.
 
 ```{r}
+#model with sleep^2
 mod1 <- lm(y~sleep_c + sleep_c2 + attend_pct_cat + study_c + study_c2 + trav_time + sleep_qual + 
     school_type + study_method + parent_educ + extra_act + web_access, data = train)
 
+#model without sleep^2
 mod1bis <- lm(y~sleep_c + attend_pct_cat + study_c + study_c2 + trav_time + sleep_qual + 
     school_type + study_method + parent_educ + extra_act + web_access, data = train)
 
+#model with study^2
 mod_1 <-lm(y~sleep_c + sleep_c2 + attend_pct_cat + study_c + study_c2 + trav_time + sleep_qual + 
     school_type + study_method + parent_educ + extra_act + web_access, data = train)
 
+#model without study^2
 mod_1bis <-lm(y~sleep_c + sleep_c2 + attend_pct_cat + study_c  + trav_time + sleep_qual + 
     school_type + study_method + parent_educ + extra_act + web_access, data = train)
 
+#full model with variable selected
 modfull <- lm(y~.-age , data = train)
 ```
 
@@ -536,16 +535,17 @@ modfull <- lm(y~.-age , data = train)
 
 ```{r}
 namemod = c("mod1/mod1bis","mod_1/mod_1bis")
-p_value1 = c(anova(mod1,mod1bis)$`Pr(>F)`[2],anova(mod_1,mod_1bis)$`Pr(>F)`[2])
-data.frame(namemod,p_value1)
+p_value1 = c(anova(mod1,mod1bis)$`Pr(>F)`[2],anova(mod_1,mod_1bis)$`Pr(>F)`[2]) #vector of p-value
+data.frame(namemod,p_value1) #table of p value of anova test
 
 AIC(mod1, mod1bis,mod_1, mod_1bis, modfull)
 ```
 
 ```{r}
 Criterion = c("R ajusted for mod1","R ajusted for mod1bis","cp for mod_1", "cp for mod_1bis","R ajusted for mod1","R ajusted for mod1bis","cp for mod_1", "cp for mod_1bis" )
-R = c(summary(mod1)$adj.r.squared,summary(mod1bis)$adj.r.squared,summary(mod_1)$adj.r.squared,summary(mod_1bis)$adj.r.squared)
+R = c(summary(mod1)$adj.r.squared,summary(mod1bis)$adj.r.squared,summary(mod_1)$adj.r.squared,summary(mod_1bis)$adj.r.squared) #vector of criterion
 
+#calcul of CP criterion
 n1 <- nrow(train)
 p1 <- length(coef(mod1))
 p2 <- length(coef(mod1bis))
@@ -567,12 +567,14 @@ data.frame(Criterion,value)
 
 ## Test of interactions suggest by the EDA.
 
-### simple interations with study_c + study_c2
+```{r}
+mod00 <- lm(y~(sleep_c + sleep_c2) + attend_pct_cat + (study_c +study_c2) + trav_time + sleep_qual + study_method +extra_act+ parent_educ*school_type + web_access, data = train) #model to test the interaction parent education X school type
+```
+
+### simple interations with study hours
 
 ```{r}
-mod00 <- lm(y~(sleep_c + sleep_c2) + attend_pct_cat + (study_c +study_c2) + trav_time + sleep_qual + study_method + extra_act + parent_educ*school_type + web_access , data = train)
-
-mod2 <- lm(y ~(study_c + study_c2)*(attend_pct_cat)+sleep_c + sleep_c2 + trav_time + parent_educ*school_type + extra_act + sleep_qual  + web_access + study_method , data = train)
+mod2 <- lm(y ~(study_c + study_c2)*(attend_pct_cat) + sleep_c + sleep_c2 + trav_time + parent_educ*school_type + extra_act + sleep_qual  + web_access + study_method , data = train)
 
 mod3 <- lm(y ~(study_c + study_c2)*(sleep_qual) + attend_pct_cat + trav_time+ sleep_c + sleep_c2 + parent_educ*school_type + extra_act  + web_access + study_method , data = train)
 
@@ -603,13 +605,13 @@ anova(mod2,mod7)$`Pr(>F)`[2]
 ```
 
 ```{r}
+#after comparison, we keep models 5 and 7 (because much less interaction than model 9 -> over fitting) 
+
 modI <- mod5
 modII <- mod7
 ```
 
-We select mod7.
-
-### interaction with sleep_qual
+### interaction with sleep quality
 
 ```{r}
 mod10 <- lm(y ~ sleep_qual*(attend_pct_cat) + study_c + study_c2 + sleep_c + sleep_c2 + trav_time + parent_educ*school_type + extra_act + web_access + study_method, data = train)
@@ -639,6 +641,7 @@ anova(mod14,mod15)$`Pr(>F)`[2]
 ```
 
 ```{r}
+#we prefer the 14 models
 modIII <- mod14
 ```
 
@@ -665,12 +668,13 @@ anova(mod16,mod19)$`Pr(>F)`[2]
 ```
 
 ```{r}
+#we conserve mod19
 modIV <- mod19
 ```
 
 We select mod14 and model19.
 
-### interaction with attend_pct_cat
+### interaction with attendance cat
 
 ```{r}
 mod20 <- lm(y ~ attend_pct_cat*(study_c + study_c2) + sleep_c + sleep_c2 + sleep_qual + trav_time + parent_educ*school_type + extra_act + web_access + study_method, data = train)
@@ -703,8 +707,11 @@ anova(mod21,mod24)$`Pr(>F)`[2]
 ```
 
 ```{r}
+#we conserve the model 24
 modV <- mod24
 ```
+
+### interaction with travel time
 
 ```{r}
 mod25 <- lm(y ~ trav_time*(study_c + study_c2 )+ sleep_qual+ attend_pct_cat+ sleep_c + sleep_c2 + parent_educ*school_type +extra_act+ web_access + study_method, data = train)
@@ -735,12 +742,11 @@ anova(mod27,mod29)$`Pr(>F)`[2]
 ```
 
 ```{r}
+#we conserve the model 29
 modVI <- mod29
 ```
 
-We select mod24 and mod29
-
-## We select the best model from those selected and those build with other interaction.
+## We select the best model from those selected and those build with other interaction (triple interactions).
 
 ```{r}
 modVII <- lm(y ~ attend_pct_cat*(sleep_c + sleep_c2)*(study_c + study_c2) +sleep_qual+extra_act + trav_time+ parent_educ*school_type + web_access + study_method, data = train)
@@ -776,23 +782,26 @@ anova(modX,modIX)
 ```
 
 ```{r}
+#list of selected models with the same names
 models <- list(modI =modI,modII =modII,modIII=modIII,modIV =modIV, modV=modV, modVI =modVI,modVII=modVII,modVIII=modVIII,modIX=modIX,modX=modX, modXI=modXI,modXII=modXII)
 ```
 
 ### we use AIC and BIC of each models.
 
 ```{r}
+#AIC criteria table
 aic <- data.frame(
   Model = names(models),
   AIC   = sapply(models, AIC)
 )
 
-
+#BIC criteria table
 bic <- data.frame(
   Model = names(models),
   BIC   = sapply(models, BIC)
 )
 
+#we order for a better visualization smaller to taller
 aic[order(aic$AIC), ]
 bic[order(bic$BIC), ]
 ```
@@ -800,17 +809,20 @@ bic[order(bic$BIC), ]
 ### we use R2 adjusted of each models.
 
 ```{r}
+#R2 adjusted criteria table
 adj_r2 <- data.frame(
   Model = names(models),
   Adj_R2 = sapply(models, function(m) summary(m)$adj.r.squared)
 )
 
+#ordered for a better understanding taller to smaller
 adj_r2[order(-adj_r2$Adj_R2), ]
 ```
 
 ### build an model with all the interactions
 
 ```{r}
+#full model in suitability with our 12 selected models
 full_mod <- lm(
   y ~ (study_c + study_c2) * (sleep_c + sleep_c2) * attend_pct_cat
     + (study_c + study_c2) * sleep_qual
@@ -828,18 +840,21 @@ sigma2 <- summary(full_mod)$sigma^2
 ### we use Cp of Mallow adjusted of each models.
 
 ```{r}
+#calculus of Cp criteria
 cp <- sapply(models, function(m) {
   p <- length(coef(m))
   rss <- sum(residuals(m)^2)
   rss / sigma2 - (nrow(train) - 2 * p)
 })
 
+#Cp criteria table
 cp_table <- data.frame(
   Model = names(models),
   Cp = cp,
   p  = sapply(models, function(m) length(coef(m)))
 )
 
+#ordered for a better understanding smaller to taller
 cp_table[order(cp_table$Cp), ]
 ```
 
@@ -856,9 +871,9 @@ comparison3 <- data.frame(
 )
 
 comparison3[order(comparison3$AIC), ]
-```
 
-We select modI, modVII and modVIII 
+# due to this table we pre select modI, modVII and modVIII 
+```
 
 ## We use the RMSE to select the best model between modI, modVII and modVIII 
 
@@ -883,24 +898,24 @@ names(RMSE) <- c("modI", "modVII","modVIII")
 row.names(RMSE) <- c("Train", "Test")
 
 RMSE
+
+# We select modVIII.
 ```
 
-We select modVIII.
-
-
-### Diagnostics, assumptions, and robustness
+# Diagnostics, assumptions, and robustness
 
 ```{r}
 summary(modVIII)
 ```
-### linear assomptions (P1 - P4)
+
+## Linear assomptions (P1 - P4)
 
 ```{r}
 library(ggfortify)
-autoplot(modVIII,1,colour = 'skyblue')
-autoplot(modVIII,2,colour = 'tan1')
-autoplot(modVIII,3,colour = 'skyblue')
-autoplot(modVIII,4,colour = 'tan1')
+autoplot(modVIII,1,colour = 'skyblue') #residuals vs fitted
+autoplot(modVIII,2,colour = 'tan1') #normal QQ plot
+autoplot(modVIII,3,colour = 'skyblue') #scale location
+autoplot(modVIII,4,colour = 'tan1') #cook's distance
 ```
 
 ```{r}
@@ -920,7 +935,8 @@ influenceIndexPlot(modVIII,vars="Studentized")
 ```{r}
 influenceIndexPlot(modVIII,vars="hat")
 ```
-### outlier detection.
+
+## Outlier detection.
 
 ```{r}
 influenceIndexPlot(modVIII,vars="cook")
@@ -932,55 +948,53 @@ outlierTest(modVIII)
 ```
 
 ```{r}
-cook <- cooks.distance(modVIII)
+cook <- cooks.distance(modVIII) #vector of cook's distance
 
-# Top 5 observations les plus influentes
-head(sort(cook, decreasing = TRUE), 3)
+# Top 3 most influential observations
+head(sort(cook, decreasing = TRUE), 3) #we choose the top 3 higher distance
 ```
 
 ```{r}
-idx <- order(cook, decreasing = TRUE)[1:3]
+idx <- order(cook, decreasing = TRUE)[1:3] #we conserve the nuber of the observation
 
-modVIII_reduced <- lm(formula(modVIII),
-                   data = train[-idx, ])
+modVIII_reduced <- lm(formula(modVIII),data = train[-idx, ]) #we remove the 3 most influential observations of the model
 
+
+#we compare the summary to seen if there is aberrant coefficients
 summary(modVIII)
 summary(modVIII_reduced)
 ```
-## Predictive performance.
 
-### Comparation between (trained/tested) observed and predicted values of our model. 
+# Predictive performance.
+
+## Comparation between (trained/tested) observed and predicted values of our model. 
 
 ```{r}
-pred_train <- predict(modVIII, newdata = train)
-pred_test  <- predict(modVIII, newdata = test)
+pred_train <- predict(modVIII, newdata = train) #vector of value predicted on the train
+pred_test  <- predict(modVIII, newdata = test) #vector of value predicted on the test
 
-base_hat_train <- rep(mean(train$y), nrow(train))
-base_hat_test  <- rep(mean(train$y), nrow(test))
 
-df_train <- data.frame(y = train$y, yhat = pred_train, split = "Train")
-df_test  <- data.frame(y = test$y,  yhat = pred_test,  split = "Test")
-df_all   <- rbind(df_train, df_test)
+#naive base model
+base_hat_train <- rep(mean(train$y), nrow(train)) #we calculate the mean of y in train target then we repeat the number of observation in train
+base_hat_test  <- rep(mean(train$y), nrow(test)) #same for test
+
+df_train <- data.frame(y = train$y, yhat = pred_train, split = "Train") 
+df_test  <- data.frame(y = test$y,  yhat = pred_test,  split = "Test") 
+df_all   <- rbind(df_train, df_test) #table with y observed, y hat predicted and split to see if the observation is in train or test
 ```
 
 ```{r}
-library(ggplot2)
-
-ggplot(df_all, aes(x = yhat, y = y)) +
-  geom_point(alpha = 0.25) +
-  geom_smooth(method = "loess", se = FALSE) +
-  geom_abline(slope = 1, intercept = 0, linetype = 2) +
-  facet_wrap(~split) +
-  labs(
-    title = "Calibration: Observed vs Predicted (modVIII)",
-    x = "Predicted score",
-    y = "Observed score"
-  )
+ggplot(df_all, aes(x = yhat, y = y)) + 
+  geom_point(alpha = 0.35, col = 'skyblue') + 
+  geom_smooth(method = "loess", se = FALSE,col = 'tan1') + 
+  geom_abline(slope = 1, intercept = 0, linetype = 2, col='red') + 
+  facet_wrap(~split) +labs(title = "Calibration: Observed vs Predicted (modVIII)", x = "Predicted score", y = "Observed score")
 ```
+
 ## Mean observed score on test data set.
 
 ```{r}
-library(dplyr)
+#Separately, we divide that into deciles, then group them by decile and by train and test category, then summaries each group as an average, and finally obtain a table with 10 points per split.
 
 df_test_bins <- df_test %>%
   mutate(bin = ntile(yhat, 10)) %>%
@@ -1002,19 +1016,17 @@ ggplot(df_test_bins, aes(x = yhat_mean, y = y_mean)) +
     y = "Mean observed score (per decile)"
   )
 ```
+
 ## Comparison of rmse, mse, median, R2 between our model and the median of the test set. 
 
 ```{r}
-set.seed(123)
-```
-
-
-```{r}
+#we calculate the criteria 
 rmse <- function(y, yhat) sqrt(mean((y - yhat)^2))
 mse  <- function(y, yhat) mean((y - yhat)^2)
 medae <- function(y, yhat) median(abs(y - yhat))
 r2_oos <- function(y, yhat) 1 - sum((y - yhat)^2) / sum((y - mean(y))^2)
 
+#table showing all criteria based on baseline and our model
 metrics <- data.frame(
   Model = c("Baseline", "modVIII"),
   RMSE  = c(rmse(test$y, base_hat_test), rmse(test$y, pred_test)),
@@ -1023,26 +1035,29 @@ metrics <- data.frame(
   MSE   = c(mse(test$y, base_hat_test), mse(test$y, pred_test))
 )
 
+#we separate the criterion for a better understanding of the following plot
 metrics_long <- tidyr::pivot_longer(metrics, cols = c(RMSE, MedAE, R2, MSE),
                                    names_to = "Metric", values_to = "Value")
-
 ggplot(metrics_long, aes(x = Metric, y = Value, fill = Model)) +
   geom_col(position = "dodge") +
   labs(title = "Predictive performance on Test: Baseline vs modVIII")
 ```
+
 ## Confidence interval at level 95% of our predictor.
 
 ```{r}
 s <- summary(modVIII)
 coef_tab <- as.data.frame(s$coefficients)
-names(coef_tab) <- c("Estimate", "Std_Error", "t_value", "p_value")
+names(coef_tab) <- c("Estimate", "Std_Error", "t_value", "p_value") # Coefficients + SE
 
+# CI 95%
 ci <- confint(modVIII, level = 0.95)   
 
+#we separate the low and high limit of the CI
 coef_tab$CI_low  <- ci[, 1]
 coef_tab$CI_high <- ci[, 2]
 
-coef_tab_final <- coef_tab[, c("Estimate", "Std_Error", "CI_low", "CI_high")]
+coef_tab_final <- coef_tab[, c("Estimate", "Std_Error", "CI_low", "CI_high")] #keep important one
 
 coef_tab_final
 ```
@@ -1050,15 +1065,14 @@ coef_tab_final
 ## Comparison of predictive quality with different size of test data set.
 
 ```{r}
-library(dplyr)
-
+#we calculate the criteria
 mse <- function(y, yhat) mean((y - yhat)^2)
 rmse <- function(y, yhat) sqrt(mean((y - yhat)^2))
 medae <- function(y, yhat) median(abs(y - yhat))
 r2_oos <- function(y, yhat) 1 - sum((y - yhat)^2) / sum((y - mean(y))^2)
 
 fractions <- c(0.2, 0.4, 0.6, 0.8, 1.0)
-B <- 30  
+B <- 30  # number of repetition
 
 res <- bind_rows(lapply(fractions, function(frac){
   bind_rows(lapply(1:B, function(b){
@@ -1079,6 +1093,7 @@ res <- bind_rows(lapply(fractions, function(frac){
   }))
 }))
 
+# Summary (mean + standard deviation) by sample size
 summary_res <- res %>%
   group_by(frac) %>%
   summarise(
@@ -1093,8 +1108,6 @@ summary_res
 ```
 
 ```{r}
-library(ggplot2)
-
 ggplot(res, aes(x = frac, y = RMSE)) +
   geom_point(alpha = 0.25) +
   geom_smooth(se = FALSE, method = "loess") +
@@ -1104,6 +1117,7 @@ ggplot(res, aes(x = frac, y = RMSE)) +
     y = "Test RMSE"
   )
 ```
+
 ## Comparison of predictive quality with different size of train data set.
 
 ```{r}
@@ -1150,42 +1164,48 @@ cv_res <- lapply(1:K, function(k){
 cv_res
 summary(cv_res)
 ```
+
 ## Prediction of new observations (confidence interval of it grade).
 
 ```{r}
+# Choice of scenarios in centered units
 A_study_c <- -1.0
 B_study_c <-  1.5
 A_sleep_c <- -1.0
 B_sleep_c <-  1.0
 
+#we generate 2 new profiles
 new_profiles <- data.frame(
-  sleep_c  = c(A_sleep_c,  B_sleep_c),
-  sleep_c2 = c(A_sleep_c^2, B_sleep_c^2),
-  study_c  = c(A_study_c,  B_study_c),
-  study_c2 = c(A_study_c^2, B_study_c^2),
-
-  attend_pct_cat = factor(c("62-72", "81-100"), levels = levels(train$attend_pct_cat)),
-  trav_time = factor(c(levels(train$trav_time)[length(levels(train$trav_time))],
-                       levels(train$trav_time)[1]),
-                     levels = levels(train$trav_time)),
-  sleep_qual = factor(c(levels(train$sleep_qual)[2], levels(train$sleep_qual)[length(levels(train$sleep_qual))]),
-                     levels = levels(train$sleep_qual)),
+  
+  sleep_c  = c(A_sleep_c,  B_sleep_c), sleep_c2 = c(A_sleep_c^2, B_sleep_c^2),
+  
+  study_c  = c(A_study_c,  B_study_c),study_c2 = c(A_study_c^2, B_study_c^2),
+  
+  attend_pct_cat = factor(c("62-72", "81-100"), levels =levels(train$attend_pct_cat)),
+  
+  trav_time = factor(c(levels(train$trav_time)[length(levels(train$trav_time))],levels(train$trav_time)[1]),levels = levels(train$trav_time)),
+  
+  sleep_qual = factor(c(levels(train$sleep_qual)[2],levels(train$sleep_qual)[length(levels(train$sleep_qual))]),levels = levels(train$sleep_qual)),
+  
   extra_act = factor(c("No","Yes"), levels = levels(train$extra_act)),
+  
   parent_educ = factor(c("High school","Post graduate 2"), levels = levels(train$parent_educ)),
+  
   school_type = factor(c("Public","Private"), levels = levels(train$school_type)),
+  
   web_access = factor(c("No","Yes"), levels = levels(train$web_access)),
-  study_method = factor(c("Notes","Mixed"), levels = levels(train$study_method))
-)
+  
+  study_method = factor(c("Notes","Mixed"), levels = levels(train$study_method)))
 
 rownames(new_profiles) <- c("Profile A (lower support)", "Profile B (higher support)")
 
-pred_ci <- predict(modVIII, newdata = new_profiles, interval = "confidence", level = 0.95)
+pred_ci <- predict(modVIII, newdata = new_profiles, interval = "confidence", level = 0.95) #CI 95%
 pred_out <- cbind(Profile = rownames(new_profiles), as.data.frame(pred_ci))
 pred_out
 ```
 
 ```{r}
-TermsX <- delete.response(terms(modVIII))
+TermsX <- delete.response(terms(modVIII)) #remove the y of this new observation
 
 pred_ci <- predict(modVIII, newdata = new_profiles,
                    interval = "confidence", level = 0.95)
@@ -1195,7 +1215,7 @@ pred_out
 ```
 
 ```{r}
-TermsX <- delete.response(terms(modVIII)) 
+TermsX <- delete.response(terms(modVIII)) #remove the y of this new observation
 
 X <- model.matrix(TermsX, new_profiles)
 
