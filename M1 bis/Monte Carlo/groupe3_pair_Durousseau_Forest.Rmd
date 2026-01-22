@@ -1,0 +1,360 @@
+---
+title: "group3_pair_Durousseau_Forest"
+output:
+  html_document:
+    df_print: paged
+    theme: default
+    css: styles.css
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE, fig.width = 5, fig.height = 5, fig.align = "center", dpi = 150, out.width = "50%") 
+```
+
+
+# Exercise 1
+
+## question 1
+
+### (a)
+
+```{r}
+dinvgamma <- function(x, alpha, beta){ return(((beta^alpha / gamma(alpha)) * x^(-alpha - 1) * exp(-beta / x)) * (x >= 0)) }
+```
+
+### (b)
+
+```{r}
+pinvgamma <- function(x, alpha, beta){ return(ifelse(x > 0, 1 - pgamma(1/x,alpha,rate = beta), 0)) }
+```
+
+### (c)
+
+```{r}
+qinvgamma <- function(p, alpha, beta){ return(1 / qgamma(1-p, alpha, rate = beta)) }
+```
+
+### (d)
+
+```{r}
+rinvgamma1 <- function(n, alpha, beta){ return(1 / rgamma(n, alpha, rate = beta)) }
+```
+
+## question 2
+
+```{r}
+rinvgamma2 <- function(n, alpha, beta){ return(qinvgamma(runif(n, 0, 1), alpha, beta)) }
+```
+
+## question 3
+
+```{r, echo = FALSE,fig.width = 5, fig.height = 3, fig.align = "center", dpi = 150, out.width = "85%"}
+alpha <- 3
+beta <- 2
+n <- 10^4
+
+x <- seq(0, 4, 0.1)
+
+ge1 <- rinvgamma1(n, alpha, beta)
+ge2 <- rinvgamma2(n, alpha, beta)
+
+par(mfrow = c(1,2),cex = 0.5)
+
+hist(ge1, freq = F, xlim = c(0,5), ylim = c(0,1.5), breaks = 100)
+lines(density(ge1), col = 'blue')
+curve(dinvgamma(x, alpha, beta), col = 'red', add = T)
+
+hist(ge2, freq = F, xlim = c(0,5),ylim = c(0,1.5), breaks = 100)
+lines(density(ge2), col = 'blue')
+curve(dinvgamma(x, alpha, beta), col = 'red', add = T)
+```
+
+## question 4
+
+```{r, echo = FALSE}
+library(microbenchmark)
+library(ggplot2)
+
+ge1 <- rinvgamma1(n, alpha, beta)
+ge2 <- rinvgamma2(n, alpha, beta)
+
+test <- microbenchmark(ge1,ge2)
+print(test)
+
+mean1 <- ge1[1]
+var1 <- ge1[2]
+
+mean2 <- ge2[1]
+var2 <- ge2[2]
+
+cost1 <- median(test$time[1])
+cost2 <- median(test$time[2])
+
+ratio <- (cost1 * var1) / (cost2 * var2)
+print(c("ratio =", ratio))
+
+display <- matrix(c(mean1,var1,mean2,var2), nrow = 2)
+rownames(display) <- c("mean", "var")
+colnames(display) <- c("ge1", "ge2")
+print(display)
+```
+
+We have that the ratio is over 1, then the best estimator is the one with rinvegamma2(). Moreover, the variance of this estimator is much smaller than the variance of rinvgamma1() meaning that rinvgamma2() is more robuste than rinvgamma1().
+
+# Exercise 2
+
+## question 1
+
+```{r}
+dinvgamma_trunc <- function(x, alpha, beta, b){ return(dinvgamma(x,alpha,beta) * (0 <= x & x <= b)/ (pinvgamma(b,alpha,beta) - pinvgamma(0,alpha,beta)) * (0 <= x & x <= b)) }
+```
+
+## question 2
+
+```{r}
+rinvgamma_trunc1 <- function(n, alpha, beta, b){ return(qinvgamma(pinvgamma(0,alpha,beta) + runif(n,0,1) * (pinvgamma(b,alpha,beta) - pinvgamma(0,alpha,beta)),alpha,beta)) }
+```
+
+## question 3
+
+```{r, echo = FALSE}
+alpha <- 3
+beta <- 2
+n <- 10^4
+b <- 5
+
+x <- seq(0, b, 0.1)
+
+ge3 <- rinvgamma_trunc1(n, alpha, beta,b)
+
+hist(ge3, freq = F, xlim = c(0,6), ylim = c(0,1.5), breaks = 10)
+lines(density(ge3), col = 'blue')
+curve(dinvgamma_trunc(x, alpha, beta,b), col = 'red', add = T)
+```
+## question 4 
+
+### (a)
+
+If $f(x) = f_{\alpha,\beta}(x) \mathbb{1}_{(0,b)}(x)$ and $g(x) = f_{\alpha,\beta}(x)$ . 
+Thus $M = \sup_{x} \frac{f(x)}{g(x)} = b$
+
+### (b)
+
+```{r}
+rinvgamma_trunc2 <- function(n, alpha, beta, b){
+  x <- numeric(0)
+  f <- function(x,b){ return(dinvgamma(x,alpha,beta) * (x <= b)) }
+  while(length(x) < n){
+    U <- runif(1)
+    X <- rinvgamma1(n, alpha, beta)
+    x <- append(x, X[U <= (f(X,b) / (b * dinvgamma(X, alpha, beta)))]) }
+  return(x) }
+```
+
+### (c)
+
+```{r, echo = FALSE}
+x <- seq(0, b, 0.1)
+
+ge4 <- rinvgamma_trunc2(n, alpha, beta,b)
+
+hist(ge4, freq = F, xlim = c(0,6), ylim = c(0,1.5), breaks = 10)
+lines(density(ge4), col = 'blue')
+curve(dinvgamma_trunc(x, alpha, beta,b), col = 'red', add = T)
+```
+
+## question 5
+
+### (a)
+
+Here the uniform distribution is of parameters $(0,b)$ as we $x \in (0,b)$
+
+### (b)
+
+we have $f(x) = f_{\alpha,\beta}(x) \mathbb{1}_{(0,b)}(x)$ and $g(x) = \frac{1}{b} \mathbb{1}_{(0,b)}(x)$ . 
+Thus $M = \sup_{x} \frac{f(x)}{g(x)} = b \max_{x} f_{\alpha,\beta} (x) = b f_{\alpha,\beta}(\frac{\beta}{\alpha + 1})$
+
+### (c)
+
+```{r}
+rinvgamma_trunc3 <- function(n, alpha, beta, b){
+  x_max <- beta / (alpha + 1)
+  M <- b * dinvgamma(x_max,alpha,beta)
+  x <- numeric(0)
+  f <- function(x,b){ return(dinvgamma(x,alpha,beta) * (x <= b))}
+  g <- function(x,b){ return((1/b ) * (0 <= x & x <= b)) }
+  while(length(x) < n){
+    U <- runif(1)
+    X <- runif(1,0,b)
+    x <- append(x, X[U <= (f(X,b) / (M * g(X,b)))]) }
+  return(x)}
+```
+
+### (d)
+
+```{r, echo = FALSE}
+alpha <- 3
+beta <- 2
+n <- 10^4
+b <- 5
+
+x <- seq(0, b, 0.1)
+
+ge5 <- rinvgamma_trunc3(n, alpha, beta,b)
+
+hist(ge5, freq = F, xlim = c(0,6), ylim = c(0,1.5), breaks = 10)
+lines(density(ge5), col = 'blue')
+curve(dinvgamma_trunc(x, alpha, beta,b), col = 'red', add = T)
+```
+
+### (e)
+
+```{r, echo = FALSE}
+ge4_5 <- rinvgamma_trunc2(n, alpha, beta,5)
+ge4_05 <- rinvgamma_trunc2(n, alpha, beta,0.5)
+ge5_5 <- rinvgamma_trunc3(n, alpha, beta,5)
+ge5_05 <- rinvgamma_trunc3(n, alpha, beta,0.5)
+
+test_5 <- microbenchmark(ge4_5, ge5_5)
+test_05 <- microbenchmark(ge4_05, ge5_05)
+
+mean4_5 <- mean(ge4_5)
+var4_5 <- var(ge4_5)
+
+mean4_05 <- mean(ge4_05)
+var4_05 <- var(ge4_05)
+
+cost4_5 <- median(test_5$time[1])
+cost4_05 <- median(test_05$time[2])
+
+
+mean5_5 <- mean(ge5_5)
+var5_5 <- var(ge5_5)
+
+mean5_05 <- mean(ge5_05)
+var5_05 <- var(ge5_05)
+
+cost5_5 <- median(test_5$time[ge5_5])
+cost5_05 <- median(test_05$time[ge5_05])
+
+ratio_5 <- (cost4_5 * var4_5) / (cost5_5 * var5_5)
+ratio_05 <- (cost4_05 * var4_05) / (cost5_05 * var5_05)
+
+ratio <-matrix(c(ratio_5,ratio_05), nrow = 2) 
+rownames(ratio) <- c("b = 5", "b = 0,5")
+colnames(ratio) <- c("ratio")
+print(ratio)
+
+display <- matrix(c(mean4_5,var4_5,mean5_5,var5_5,mean4_05,var4_05,mean5_05,var5_05), nrow = 2)
+rownames(display) <- c("mean", "var")
+colnames(display) <- c("ge4_5", "ge5_5","ge4_05", "ge5_05")
+print(display)
+```
+
+# Exercise 3 
+
+## question 1 
+
+```{r}
+estim_mc_invgamma <- function(n, sample_y, alpha, beta, b){
+  hs <-  (1 - sample_y^2) * as.numeric(sample_y <= b)
+  return(c(mean(hs), var(hs)))}
+```
+
+## question 2
+
+```{r}
+estim_mc_invgamma_trunc <- function(n, sample_y, alpha, beta){ 
+  hs <- 1 - sample_y^2
+  return(c(mean(hs), var(hs)))}
+```
+
+## question 3 
+
+```{r, echo = FALSE}
+alpha <- 3
+beta <- 2
+b <- 5
+n <- 10^4
+
+sample_y1 <- rinvgamma1(n,alpha,beta)
+sample_y2 <- rinvgamma2(n,alpha,beta)
+sample_y1_trunc <- rinvgamma_trunc1(n,alpha,beta,b)
+sample_y2_trunc <- rinvgamma_trunc2(n,alpha,beta,b)
+sample_y3_trunc <- rinvgamma_trunc3(n,alpha,beta,b)
+
+mc_1 <- estim_mc_invgamma(n, sample_y1, alpha, beta, b)
+mc_2 <- estim_mc_invgamma(n, sample_y2, alpha, beta, b)
+mc_trunc_1 <- estim_mc_invgamma_trunc(n, sample_y1_trunc, alpha, beta)
+mc_trunc_2 <- estim_mc_invgamma_trunc(n, sample_y2_trunc, alpha, beta)
+mc_trunc_3 <- estim_mc_invgamma_trunc(n, sample_y3_trunc, alpha, beta)
+
+display <- matrix(c(mc_1,mc_2,mc_trunc_1,mc_trunc_2,mc_trunc_3), nrow = 2)
+rownames(display) <- c("mean", "var")
+colnames(display) <- c("mc_1", "mc_2","mc_trunc_1", "mc_trunc_2","mc_trunc_3")
+print(display)
+
+library(microbenchmark)
+test <- microbenchmark(mc_1,mc_2,mc_trunc_1,mc_trunc_2,mc_trunc_3)
+print(test)
+
+cost1 <- median(test$time[1])
+cost2 <- median(test$time[2])
+cost3 <- median(test$time[3])
+cost4 <- median(test$time[4])
+cost5 <- median(test$time[5])
+
+ratio_12 <- (cost1 * mc_1[2]) / (cost2 * mc_2[2])
+ratio_13 <- (cost1 * mc_1[2]) / (cost3 * mc_trunc_1[2])
+ratio_14 <- (cost1 * mc_1[2]) / (cost4 * mc_trunc_2[2])
+ratio_15 <- (cost1 * mc_1[2]) / (cost5 * mc_trunc_3[2])
+
+ratio_23 <- (cost2 * mc_2[2]) / (cost3 * mc_trunc_1[2])
+ratio_24 <- (cost2 * mc_2[2]) / (cost4 * mc_trunc_2[2])
+ratio_25 <- (cost2 * mc_2[2]) / (cost5 * mc_trunc_3[2])
+
+ratio_34 <- (cost3 * mc_trunc_1[2]) / (cost4 * mc_trunc_2[2])
+ratio_35 <- (cost3 * mc_trunc_1[2]) / (cost5 * mc_trunc_3[2])
+
+ratio_45 <- (cost4 * mc_trunc_2[2]) / (cost5 * mc_trunc_3[2])
+
+ratio <-matrix(c(ratio_12,ratio_13,ratio_14,ratio_15,NA,ratio_23,ratio_24,ratio_25,NA,NA,ratio_34,ratio_35,NA,NA,NA,ratio_45), nrow = 4) 
+rownames(ratio) <- c("mc_2","mc_trunc_1", "mc_trunc_2","mc_trunc_3")
+colnames(ratio) <- c("mc_1", "mc_2","mc_trunc_1", "mc_trunc_2")
+
+print(ratio)
+
+```
+
+We can see that the better estimator is mc_trunc_2() the Monte-Carlo estimator base on a $InvGamma_{[0,b]}(\alpha,\beta)$ or mc_trunc_3() the Monte-Carlo estimator base on a $\mathcal{U}([0,b])$ depending on the randomness of the microbenchmark function. This estimator has the smallest variance with a ratio with the other estimator always letting us choose it (greater or equal than 1).
+
+```{r, echo = FALSE}
+alpha <- 3
+beta <- 2
+b <- 0.5
+n <- 10^4
+
+sample_y1 <- rinvgamma1(n,alpha,beta)
+sample_y2 <- rinvgamma2(n,alpha,beta)
+sample_y1_trunc <- rinvgamma_trunc1(n,alpha,beta,b)
+sample_y2_trunc <- rinvgamma_trunc2(n,alpha,beta,b)
+sample_y3_trunc <- rinvgamma_trunc3(n,alpha,beta,b)
+
+mc_1 <- estim_mc_invgamma(n, sample_y1, alpha, beta, b)
+mc_2 <- estim_mc_invgamma(n, sample_y2, alpha, beta, b)
+mc_trunc_1 <- estim_mc_invgamma_trunc(n, sample_y1_trunc, alpha, beta)
+mc_trunc_2 <- estim_mc_invgamma_trunc(n, sample_y2_trunc, alpha, beta)
+mc_trunc_3 <- estim_mc_invgamma_trunc(n, sample_y3_trunc, alpha, beta)
+
+display <- matrix(c(mc_1,mc_2,mc_trunc_1,mc_trunc_2,mc_trunc_3), nrow = 2)
+rownames(display) <- c("mean", "var")
+colnames(display) <- c("mc_1", "mc_2","mc_trunc_1", "mc_trunc_2","mc_trunc_3")
+print(display)
+
+
+library(microbenchmark)
+test <- microbenchmark(mc_1,mc_2,mc_trunc_1,mc_trunc_2,mc_trunc_3)
+print(test)
+```
+
+Here the variance of our estimator are so close to 0 that the ratio will not be relevant, as we divide something really close to 0 by something really close to 0 it's undetermined. But we can argue with the matrix displaying all the mean-var that the best estimator is also mc_trunc_2() or mc_trunc_3() with the same argument as previously. 

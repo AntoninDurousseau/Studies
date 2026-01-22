@@ -1,0 +1,36 @@
+---
+title: "TP 7"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercice 7
+
+```{r}
+n <- 5000
+
+accept_reject <- function(n){
+  z <- matrix(nrow = 0, ncol = 2)
+  while(nrow(z) < n){
+    batch_size <- max(100, ceiling((n-nrow(z))* 4 / pi))
+    Z <- matrix(runif(2 * batch_size, -1, 1), ncol = 2)
+    r2 <- rowSums(Z^2)
+    accepted <- Z[r2 <= 1, , drop = FALSE]
+    z <- rbind(z, accepted)
+  }
+  z <- z[1:n, ]
+  return(z)
+}
+```
+
+```{r}
+n <- 10000
+
+ptn <- accept_reject(n)
+plot(ptn, asp = 1, xlab = "x", ylab = "y")
+```
+

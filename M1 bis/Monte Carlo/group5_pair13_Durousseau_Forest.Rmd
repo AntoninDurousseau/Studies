@@ -1,0 +1,341 @@
+---
+title: "group5_pair13_Durousseau_Forest"
+---
+
+```{r setup, include=FALSE} 
+options(warn=-1)
+```
+
+
+```{r}
+MC_unif <- function(n){
+  U <- runif(n,-3,3)
+  h <- 1/(2*pi) * exp(-1/2 * U^2)
+  return(c(mean(h), 1/n * var(h)))
+  }
+```
+
+```{r}
+MC_norm <- function(n){
+  X <- rnorm(n)
+  h <- as.numeric((X <= 3) * (X >= -3))
+  return(c(mean(h), 1/n * var(h)))
+}
+```
+
+```{r}
+MC_unif_ant <- function(n){
+  U <- runif(n,-3,3)
+  AU <- - U
+  h <- function(u){return(1/(2*pi) * exp(-1/2 * u^2))}
+  I <- 1 / (2*n) * sum(h(U) - h(AU))
+  V <- MC_unif(n)[2] * (1 + cor(h(U),h(AU)))
+  return(c(I,V))
+  }
+```
+
+```{r}
+n <- 10000
+
+MC1 <- MC_unif(n)
+MC2 <- MC_norm(n)
+A1 <- MC_unif_ant(n)
+
+Var <- matrix(c(MC1[2],MC2[2],A1[2]), nrow = 1, ncol = 3)
+colnames(Var) <- c("MC_unif", "MC_norm", "MC_unif_att")
+rownames(Var) <- "Variances"
+print(Var)
+```
+
+
+```{r}
+library(microbenchmark)
+test <- microbenchmark(MC1,MC2,A1)
+
+C1 <- median(test$time[test$expr == 'MC1'])
+C2 <- median(test$time[test$expr == 'MC2'])
+C3 <- median(test$time[test$expr == 'A1'])
+
+eff_ratio1 <- (C1 * MC1[2]) / (C2 * MC2[2])
+eff_ratio2 <- (C1 * MC1[2]) / (C3 * A1[2])
+eff_ratio3 <- (C2 * MC2[2]) / (C3 * A1[2])
+
+paste0("Ration between MC_unif and MC_norm = ",eff_ratio1)
+paste0("Ration between MC_unif and MC_unif_att = ",eff_ratio2)
+paste0("Ration between MC_norm and MC_unif_att = ",eff_ratio3)
+```
+
+Thus, it leads us to prefer the estimator using uniform antithetic variables.
+
+```{r}
+MC_norm_ant <- function(n){
+  X <- rnorm(n)
+  AX <- -X
+  h <- function(x){return(as.numeric((x <= 3) * (x >= -3)))}
+  I <- 1 / (2*n) * sum(h(X) - h(AX))
+  V <- MC_norm(n)[2] * (1 + cor(h(X),h(AX)))
+  return(c(I,V))
+  }
+```
+
+```{r}
+A2 <- MC_norm_ant(n)
+
+Var <- cbind(Var,A2[2])
+colnames(Var)[4] <- "MC_norm_att"
+print(Var)
+```
+
+
+```{r}
+test2 <- microbenchmark(A2)
+
+C4 <- median(test2$time)
+
+eff_ratio1A <- (C1 * MC1[2]) / (C4 * A2[2])
+eff_ratio2A <- (C2 * MC2[2]) / (C4 * A2[2])
+eff_ratio3A <- (C3 * A1[2]) / (C4 * A2[2])
+
+paste0("Ration between MC_unif and MC_norm_ant = ",eff_ratio1A)
+paste0("Ration between MC_norm and MC_norm_ant = ",eff_ratio2A)
+paste0("Ration between MC_unif_att and MC_norm_ant = ",eff_ratio3A)
+```
+
+```{r}
+rnorm_trunc <- function(n){
+  X <- rnorm(n)
+  return(as.numeric(X >= -3) * (X <= 3))
+}
+```
+
+Here, if we use a truncated normal, we just have to simulate n variable of this law and compute the mean of this variables to estimate p.
+
+```{r}
+MC_trunc_norm <- function(n){
+  X <- rnorm_trunc(n)
+  return(c(mean(X), 1/n * var(X)))
+}
+```
+
+```{r}
+n_list <- seq(10000,100000,10000)
+
+MC1_list <- numeric(0)
+MC2_list <- numeric(0)
+A1_list <- numeric(0)
+A2_list<- numeric(0)
+Trunc_list <- numeric(0)
+
+for (n in n_list){
+  MC1_list <- append(MC1_list,MC_unif(n)[2])
+  MC2_list <- append(MC2_list,MC_norm(n)[2])
+  A1_list <- append(A1_list,MC_unif_ant(n)[2])
+  A2_list <- append(A2_list,MC_norm_ant(n)[2])
+  Trunc_list <- append(Trunc_list,MC_trunc_norm(n)[2])
+}
+
+VAR <- matrix(c(MC1_list,MC2_list,A1_list,A2_list,Trunc_list),nrow = length(n_list),ncol = 5)
+colnames(VAR) <- c("MC1_list","MC2_list","A1_list","A2_list","Trunc_list")
+colors <- c("red","blue","green","black","purple")
+
+matplot(VAR, type = "l", lty = 1, lwd = 1.5, col = colors)
+legend("topright", legend = colnames(VAR), col = colors, lty = 1, lwd = 2)
+```
+
+```{r}
+Trunc <- MC_trunc_norm(n)
+
+Var <- cbind(Var,Trunc[2])
+colnames(Var)[5] <- "MC_trunc_norm"
+print(Var)
+```
+
+```{r}
+test3 <- microbenchmark(Trunc)
+
+C5 <- median(test3$time)
+
+eff_ratio1T <- (C1 * MC1[2]) / (C5 * Trunc[2])
+eff_ratio2T <- (C2 * MC2[2]) / (C5 * Trunc[2])
+eff_ratio3T <- (C3 * A1[2]) / (C5 * Trunc[2])
+eff_ratio4T <- (C4 * A2[2]) / (C5 * Trunc[2])
+
+paste0("Ration between MC_unif and MC_trunc_norm = ",eff_ratio1T)
+paste0("Ration between MC_norm and MC_trunc_norm = ",eff_ratio2T)
+paste0("Ration between MC_unif_att and MC_trunc_norm = ",eff_ratio3T)
+paste0("Ration between MC_norm_ant and MC_trunc_norm = ",eff_ratio4T)
+```
+
+# Exercise 2
+
+We can't use an uniform distribution due to the fact that the domain of the integral is infit. 
+
+```{r}
+MC_norm2 <- function(n){
+  X <- rnorm(n)
+  h <- as.numeric((X >= 3))
+  return(c(1 - 2*mean(h), 4/n * var(h)))
+}
+```
+
+```{r}
+IS_norm <- function(n,mu){
+  X <- rnorm(n,mu,1)
+  fh <- function(x){return(1/(2*pi) * exp(-1/2 * x^2) * (x >= 3))}
+  g <- function(x){return((1/(2*pi) * exp(-1/2 * (x - mu)^2)))}
+  I <- fh(X)/g(X)
+  return(c(1 - 2*mean(I), 4/n * var(I)))
+}
+```
+
+```{r}
+mu_list <- seq(0.1,6,0.1)
+
+var_list <- numeric(0)
+for (mu in mu_list){
+  var_list <- append(var_list, IS_norm(n,mu)[2])
+}
+
+mu_opt <- mu_list[which.min(var_list)]
+
+plot(mu_list,var_list,type="l")
+points(mu_opt,min(var_list),col="red")
+
+
+paste0("mu optimal is ", mu_opt)
+```
+
+```{r}
+IS_norm_ant <- function(n,mu){
+  X <- rnorm(n,mu,1)
+  AX <- 2 * mu - X
+  fh <- function(x){return(na.omit(1/(2*pi) * exp(-1/2 * x^2) * (x >= 3)))}
+  g <- function(x){return(na.omit(1/(2*pi) * exp(-1/2 * (x - mu)^2)))} 
+  
+  I <- (1/(2*n) * sum((fh(X)/g(X)) - (fh(AX)/g(AX))))
+  V <- MC_norm2(n)[2] * (1 + cor(fh(X)/g(X),fh(AX)/g(AX)))
+  return(c(1 - 2*I, V))
+}
+```
+
+```{r}
+MC1_2 <- MC_norm2(n)
+IS1 <- IS_norm(n,mu_opt)
+IS2 <- IS_norm_ant(n,mu_opt)
+
+Var2 <- matrix(c(MC1_2[2],IS1[2],IS2[2]),nrow = 1, ncol = 3)
+colnames(Var2) <- c("MC_norm2","IS_norm","IS_norm_ant")
+rownames(Var2) <- "Variances"
+print(Var2)
+```
+
+```{r}
+IS_exp <- function(n,lam){
+  U <- runif(n)
+  X <- -1/lam * log(U)
+  fh <- function(x){return(na.omit(1/(2*pi) * exp(-1/2 * x^2) * (x >= 3)))}
+  g <- function(x){return(na.omit(lam * exp(-lam * x)))}
+  I <- fh(X)/g(X)
+  return(c(1 - 2*mean(I), 4/n * var(I)))
+}
+```
+
+```{r}
+lam_list <- seq(0.1,5,0.1)
+
+var_list <- numeric(0)
+for (lam in lam_list){
+  var_list <- append(var_list, IS_exp(n,lam)[2])
+}
+
+lam_opt <- lam_list[which.min(var_list)]
+plot(lam_list,var_list,type="l")
+points(lam_opt,min(var_list),col="red")
+
+paste0("lambda optimal is ", lam_opt)
+```
+
+
+```{r}
+IS_exp_ant <- function(n,lam){
+  U <- runif(n,0,1)
+  X <- -1/lam * log(U)
+  AX <- -1/lam * (log(1-U))
+  fh <- function(x){return(na.omit(1/(2*pi) * exp(-1/2 * x^2) * (x >= 3)))}
+  g <- function(x){return(na.omit(lam * exp(-lam * x)))} 
+  I <- 1/(2*n) * sum((fh(X)/g(X)) - (fh(AX)/g(AX)))
+  V <- MC_norm2(n)[2] * (1 + cor(fh(X)/g(X),fh(AX)/g(AX)))
+  return(c(1 - 2*I, V))
+}
+
+
+U <- runif(n,0,1)
+X <- -1/lam * log(U)
+AX <- -1/lam * (log(1-U))
+fh <- function(x){return(na.omit(1/(2*pi) * exp(-1/2 * x^2) * (x >= 3)))}
+g <- function(x){return(na.omit(lam * exp(-lam * x)))} 
+```
+
+```{r}
+IS3 <- IS_exp(n,lam_opt)
+IS4 <- IS_exp_ant(n,lam_opt)
+
+Var2 <- cbind(Var2,IS3[2],IS4[2])
+colnames(Var2)[4:5] <- c("IS_exp","IS_exp_ant")
+print(Var2)
+```
+
+# Exercise 3
+
+```{r}
+MC_exp_int <- function(n){
+  X <- rexp(n,1)
+  h <- X^2
+  return(c(mean(h), 1/n * var(h)))
+}
+```
+
+```{r}
+CV_exp_int <- function(n){
+  X <- rexp(n,1)
+  h <- function(x){return(x^2)}
+  h0 <- function(x){return(x)}
+  In <- function(n,x,b){return(1/n * sum(h(x) - b * (h0(x) - 1)))}
+  Vn <- function(n,x,b){return(1/n * (var(h(x)) + b^2*var(h0(x)) - 2 * b * cov(h(x),h0(x))))}
+  
+  n_train <- floor(n * 0.1)
+  idx_train <- sample.int(n,n_train)
+  X_train <- X[idx_train]
+  X_test  <- X[-idx_train] 
+  n_test <- length(X_test)
+  
+  b_opt <- cov(h(X_train) , h0(X_train)) / var(h0(X_train))
+  return(c(In(n_test,X_test,b_opt), Vn(n_test,X_test,b_opt)))
+}
+```
+
+```{r}
+MC_exp <- MC_exp_int(n)
+CV_exp <- CV_exp_int(n)
+
+Var_exp <- matrix(c(MC_exp[2],CV_exp[2]), nrow = 1, ncol = 2)
+colnames(Var_exp) <- c("MC_exp_int", "CV_exp_int")
+rownames(Var_exp) <- "Variances"
+print(Var_exp)
+```
+
+```{r}
+test_exp <- microbenchmark(MC_exp,CV_exp)
+
+C1_exp <- median(test_exp$time[test_exp$expr == 'MC_exp'])
+C2_exp <- median(test_exp$time[test_exp$expr == 'CV_exp'])
+
+eff_ratio_exp <- (C1_exp * MC_exp[2]) / (C2_exp * CV_exp[2])
+
+paste0("Ration between MC_exp_int and CV_exp_int = ",eff_ratio_exp)
+```
+
+
+
+
+

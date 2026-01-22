@@ -1,0 +1,18 @@
+/* Text font size */
+body {
+  font-size: 12px; /* Change to 14px, 18px, etc. */
+}
+
+/* Code blocks and inline code */
+code, pre {
+  font-size: 10px;
+  font-family: "Fira Code", monospace;
+}
+
+/* Headings */
+h1 { font-size: 22px; }
+h1.title {
+  display: none;
+}
+h2 { font-size: 18px; }
+h3 { font-size: 14px; }

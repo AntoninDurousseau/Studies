@@ -1,0 +1,67 @@
+---
+title: "TP 3"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercice 3
+
+## 1
+
+Write a function $BM(n)$ that returns n realizations of the normal distribution $\mathcal{N}(0, 1)$ using the Cartesian version of the Box-Muller method.
+
+
+```{r}
+BM <- function(n){
+  m <- ceiling(n/2)
+  u1 <- runif(m)
+  u2 <- runif(m)
+  z1 <- sqrt(-2 * log(u1)) * cos(2*pi*u2)
+  z2 <- sqrt(-2 * log(u1)) * sin(2*pi*u2)
+  z <- c(z1, z2)
+  return(z[1:n])
+}
+
+BM2 <- function(n){
+  m <- ceiling(n/2)
+  u1 <- runif(m,-1,1)
+  u2 <- runif(m,-1,1)
+  z1 <- u1 * sqrt((-2 * log(u1^2 + u2^2)) / (u1^2 + u2^2)) * ((u1^2 + u2^2) <= 1)
+  z2 <- u2 * sqrt((-2 * log(u1^2 + u2^2)) / (u1^2 + u2^2)) * ((u1^2 + u2^2) <= 1)  
+  z <- c(z1, z2)
+  return(z[!is.na(z)])
+}
+```
+
+## 2
+
+Validate the algorithm using a graphical tool.
+
+```{r}
+n <- 10000
+
+X <- BM(n)
+X2 <- BM2(n)
+x <- seq(-10,10,0.1)
+Y <- rnorm(n,0,1)
+
+par(mfrow = c(1,2))
+
+hist(X,freq = FALSE)
+lines(density(X), col = 'blue')
+curve(dnorm(x,0,1), col="red", add = T)
+
+qqplot(X,Y, main = "QQ-Plot between real N(0,1) and Box-Muller N(0,1)")
+
+par(mfrow = c(1,2))
+
+hist(X2,freq = FALSE)
+lines(density(X2), col = 'blue')
+curve(dnorm(x,0,1), col="red", add = T)
+
+qqplot(X2,Y, main = "QQ-Plot between real N(0,1) and Box-Muller N(0,1)")
+```

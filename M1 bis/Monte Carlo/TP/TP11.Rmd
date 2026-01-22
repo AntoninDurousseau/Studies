@@ -1,0 +1,82 @@
+---
+title: "TP 11"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercise 11
+
+## 1
+
+```{r}
+MC <- function(n){
+  X <- rcauchy(n,0,1)
+  return(c(mean(X >= 50),1/n * var(X >= 50)))
+}
+
+print(MC(10000))
+```
+## 2
+
+```{r}
+g <- function(x,a,k){
+  return(a^k * k / (x^(k+1)) * (x >= a))
+}
+
+fh <- function(x,a,k){
+  return(1 / (pi*(1+x^2)) * (x >= 50))
+}
+
+IS <- function(n,a,k){
+  U <- runif(n,0,1)
+  X <- a / (1 - U^(1/k))
+  fh <- fh(X,a,k)
+  g <- g(X,a,k)
+  return(c(mean(fh/g), 1/n * var(fh/g)) )
+}
+
+print(IS(10000,50,1))
+```
+## 3
+
+```{r}
+a <- 50
+n <- 10000
+k_list <- seq(0,2,0.1)
+
+norm <- c()
+for (k in k_list){
+  I <- IS(n,a,k)[1]
+  norm <- append(norm,sqrt(MC(n)[1]^2 + I^2))
+}
+
+plot(k_list,norm, type = "l")
+points(k_list[which.min(norm)], min(norm), col="red")
+
+
+k_opti <- k_list[which.min(norm)]
+print(c("the optimal k is", k_opti))
+```
+
+```{r}
+n <- 1:10000
+a <- 50
+k <- k_opti
+
+M <- MC(n)
+I <- IS(n,a,k)
+
+display <- matrix(c(M[1], M[2],I[1],I[2]), nrow = 2)
+rownames(display) <- c("mean", "var")
+colnames(display) <- c("MC", "IS")
+print(display)
+
+ratio <- ceiling(M[2] / I[2])
+paste0("We divide the variance by: ", ratio)
+```
+
+

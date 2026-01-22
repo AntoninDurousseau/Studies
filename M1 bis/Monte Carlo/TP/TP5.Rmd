@@ -1,0 +1,26 @@
+---
+title: "TP 5"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercice 5
+
+```{r}
+t <- seq(1,1110,0.01)
+
+f_brow <- function(t){
+  size <- length(t)
+  dt <- t[2:size] - t[1:size - 1]
+  incr <- rnorm(size - 1, 0, sqrt(dt))
+  return(c(0, cumsum(incr)))
+}
+```
+
+```{r}
+plot(t,f_brow(t), type = "l", lwd = 2, xlab = "time", ylab = "", main = "Brownian motion simultated from times t")
+```

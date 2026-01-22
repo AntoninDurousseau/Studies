@@ -1,0 +1,52 @@
+---
+title: "TP 9"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercice 9
+
+```{r}
+n <-  15000
+
+estim_mc <- function(n , sample_x, h){
+  xs <- sample_x
+  hs <- h(xs)
+  return(c(mean(hs), var(hs)))
+}
+```
+
+```{r}
+h_1 <- function(x){
+  return(4 * sqrt(1 - x**2))
+}
+
+sample_x1 <- function(n){
+  return(runif(n,0,1))
+}
+
+h_2 <- function(m){
+  return(4 * (rowSums(m**2) <= 1))
+}
+
+sample_x2 <- function(n){
+  return(matrix(c(runif(n,0,1), runif(n,0,1)), nrow = n))
+}
+```
+
+```{r}
+mc1 <- estim_mc(n, sample_x1(n), h_1)
+mc2 <- estim_mc(n, sample_x2(n), h_2)
+display <- matrix(c(mc1,mc2), nrow = 2)
+rownames(display) <- c("mu", "sigma")
+colnames(display) <- c("mc1", "mc2")
+print(display)
+
+library(microbenchmark)
+test <- microbenchmark(mc1,mc2)
+print(test)
+```

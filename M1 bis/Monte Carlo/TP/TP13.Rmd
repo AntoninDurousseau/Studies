@@ -1,0 +1,62 @@
+---
+title: "TP 13"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercise 13
+
+```{r}
+MC1 <- function(n){
+  X <- rnorm(0,1/2)
+  h <- sqrt(pi) * (X <= 2)
+  return(mean(h), 1/n * var(h))
+}
+
+MC2 <- function(n){
+  X <- runif(n,0,2)
+  h <- exp(-X**2) * 2
+  return(mean(h), 1/n * var(h))
+}
+```
+
+```{r}
+A1 <- function(n){
+  X <- rnorm(0,1/2)
+  AX <- - X
+  h <- sqrt(pi) * (X <= 2)
+  hA <- sqrt(pi) * (AX <= 2)
+  return(mean((h - hA)/2), 1/n * var((h - hA)/2))
+}
+
+A2 <- function(n){
+  X <- runif(n,0,2)
+  AX <- 1 - X
+  h <- exp(-X**2) * 2
+  hA <- exp(-AX**2) * 2
+  return(mean((h - hA)/2), 1/n * var((h - hA)/2))
+}
+```
+
+```{r}
+moment_gen_uni <- function(k){
+  return(exp(k * 2) / (2 * (k + 1)))
+}
+```
+
+```{r}
+h0 <- function(x,k){
+  return(2 * sum((-1)**k * x**(2*k) / factorial(k)))
+}
+
+m <- function(n,k){
+  X <- runif(n,0,2)
+  return(mean(h0(X,k)))
+}
+```
+
+

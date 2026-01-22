@@ -1,0 +1,47 @@
+---
+title: "TP 4"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercice 4
+
+Let $X = (X_1, X_2)$ follow the distribution 
+
+## 1
+
+
+```{r}
+library(mvtnorm)
+
+f_gauss_vect <- function(n,mu,Sig) {
+  return(rmvnorm(n, mean = mu, sigma = Sig))
+}
+```
+
+## 2
+
+```{r}
+n <- 10000
+mu <- c(1,2)
+Sig <- matrix(c(4,3,3,9), nrow = 2)
+
+X <- f_gauss_vect(n,mu,Sig)
+x <- seq(-10,10,0.1)
+
+Y <- X[,1] + X[,2]
+
+Z <- rnorm(n, mean = 3, sd = sqrt(19))
+
+par(mfrow = c(1,2))
+
+hist(Y,freq = F)
+lines(density(Y), col = "blue")
+curve(dnorm(x, mean = 3, sd = sqrt(19)), add = T, col = "red")
+
+qqplot(X,Z,main = "QQ-Plot between real N(3,19) and estimated one")
+```

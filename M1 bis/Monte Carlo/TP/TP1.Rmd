@@ -1,0 +1,49 @@
+---
+title: "TP 1"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercise 1
+
+Let $X$ be a discrete random variable over the set 
+${5, 6, 7, 8}$. The distribution $\mathcal{v}$ of $X$ is defined by
+$\mathbb{P}[X = 5] = 0.4, \mathbb{P}[X = 6] = 0.2, \mathbb{P}[X = 7] = 0.3, \mathbb{P}[X = 8] = 0.1$
+
+Simulate a sample $x$ of 10000 i.i.d. random variables following the distribution $\mathcal{v}$ using the inverse transform method.
+function method.
+
+Let $U_n$ a sample of Uniform $\mathcal{U}([0,1])$
+```{r}
+n <- 10000
+U <- runif(n)
+
+f <- function(u){
+  if (u <= 0.4){
+    return(5)
+  }
+  if (u <= 0.6){
+    return(6)
+  }
+  if (u <= 0.9){
+    return(7)
+  }
+  return(8)
+}
+
+f_vectorise <- Vectorize(f)
+
+X <- f_vectorise(U)
+
+X_opti <- sample(5:8, n, replace = TRUE, prob = c(0.4,0.2,0.3,0.1))
+```
+
+```{r}
+hist(X)
+hist(X_opti)
+```
+

@@ -1,0 +1,44 @@
+---
+title: "TP 6"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+
+# Exercice 6
+
+## 1
+
+```{r}
+f <-function(x){
+  return(2/pi * sqrt(1 - x**2) * (x >= -1 & x <= 1))
+}
+
+g <- function(x){
+  return(1/2 * (x >= -1 & x <= 1))
+}
+
+M <- 4/pi
+
+accept_reject <- function(n){
+  x <- numeric(0)
+  while(length(x) < n){
+    U <- runif(1)
+    X <- runif(1, -1, 1)
+    x <- append(x, X[U <= (f(X) / (M * g(X)))])
+  }
+  return(x)
+}
+```
+
+```{r}
+t <- seq(-1, 1, 0.01)
+n <- 10000
+
+hist(accept_reject(n), freq = FALSE, breaks = 10)
+lines(t, f(t), col = "red", lwd = 2)
+```

@@ -1,0 +1,108 @@
+---
+title: "TP 10"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercise 10
+
+```{r}
+n <- 10000
+
+MC <- function(h,sim_x,sim_y){
+  xs <- sim_x
+  ys <- sim_y
+  hs <- h(xs,ys)
+  return(mean(hs))
+}
+```
+
+```{r}
+f <- function(x, b, mean, sd) {
+  1 / (sqrt(2 * pi * sd^2) * pnorm((mean - b) / sd)) *
+    exp(-(x - mean)^2 / (2 * sd^2)) *
+    (x >= b)
+}
+
+tr_norm <-function(n, b, mean, sd){
+  M <- 1 / (sqrt(2 * pi * sd^2) * pnorm((mean - b) / sd))
+  x <- numeric(0)
+  while(length(x) < n){
+    U <- runif(1)
+    X <- rnorm(1, mean, sd)
+    x <- append(x, X[U <= (f(X, b, mean, sd) / (M * dnorm(X)))])
+  }
+  return(x)
+}
+```
+
+## 1
+### a
+
+```{r}
+h1 <- function(x,y){
+  return(5 * sqrt(4*pi) * sqrt((x+y) * (y > 0)) * sin(y**4) * exp(-3/2 * x) * (3<= y))
+}
+
+sim_x1 <- runif(n,0,5)
+sim_y1 <- rnorm(n,0,2)
+```
+
+### b 
+
+```{r}
+h2 <- function(x,y){
+  return(2/3 * sqrt(4*pi) * sqrt((x+y) * (y > 0)) * sin(y**4) * (3<= y) * (x >= 2))
+}
+
+sim_x2 <- rexp(n,3/2)
+sim_y2 <- rnorm(n,0,2)
+```
+
+### c 
+
+```{r}
+h3 <- function(x,y){
+  return(2/3 * sqrt(4*pi) * sqrt((x+y) * (y > 0)) * sin(y**4) * (3<= y) * (x >= 2))
+}
+
+sim_x3 <- rexp(n,3/2)
+sim_y3 <- tr_norm(n,2,0,2)
+```
+
+## 2 
+
+```{r}
+library(microbenchmark)
+n <- 10000
+mat <- matrix(nrow=0 , ncol = 3)
+
+for (k in 0:9){
+  sim_x1 <- runif(n,0,5)
+  sim_y1 <- rnorm(n,0,2)
+  MC1 <- MC(h1,sim_x1,sim_y1)
+  test1 <- microbenchmark(MC1)
+  cost1 <- mean(test1$time)
+
+  sim_x2 <- rexp(n,3/2)
+  sim_y2 <- rnorm(n,0,2)
+  MC2 <- MC(h2,sim_x2,sim_y2)
+  test2 <- microbenchmark(MC2)
+  cost2 <- mean(test2$time)
+  
+  sim_x3 <- rexp(n,3/2)
+  sim_y3 <- tr_norm(n,2,0,2)
+  MC3 <- MC(h3,sim_x3,sim_y3)
+  test3 <- microbenchmark(MC3)
+  cost3 <- mean(test3$time)
+  
+  cost <- c(cost1,cost2,cost3)
+  mat <- rbind(mat,cost)
+}
+
+print(colMeans(mat))
+```

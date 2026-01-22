@@ -1,0 +1,111 @@
+---
+title: "TP 8"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercice 8
+
+## Part 1
+
+```{r}
+f <- function(x, b, mean, sd) {
+  1 / (sqrt(2 * pi * sd^2) * pnorm((mean - b) / sd)) *
+    exp(-(x - mean)^2 / (2 * sd^2)) *
+    (x >= b)
+}
+
+tr_norm <-function(n, b, mean, sd){
+  M <- 1 / (sqrt(2 * pi * sd^2) * pnorm((mean - b) / sd))
+  x <- numeric(0)
+  while(length(x) < n){
+    U <- runif(1)
+    X <- rnorm(1, mean, sd)
+    x <- append(x, X[U <= (f(X, b, mean, sd) / (M * dnorm(X)))])
+  }
+  return(x)
+}
+```
+
+```{r}
+n <- 10000
+b <- 2
+mean <- 0
+sd <- 2
+
+t <- seq(b, 7, 0.01)
+
+hist(tr_norm(n, b, mean, sd), freq = FALSE, breaks = 20)
+lines(t, f(t, b, mean, sd), col = "red", lwd = 2)
+```
+
+## Part 2
+
+```{r}
+g_lam <- function(x, b, lam){
+  return(lam * exp(-lam *(x-b)) * (x >= b))
+}
+
+g <- function(x, lam){
+  return(lam * exp(-lam * x))
+}
+
+tr_norm_2 <- function(n, b, mean, sd){
+  lam <- ((b-mean) + sqrt((b-mean)^2 + 4*sd^2)) / (2*sd^2)
+  M <- exp(lam * b)
+  x <- numeric(0)
+  while(length(x) < n){
+    U <- runif(1)
+    X <- rexp(1, lam)
+    x <- append(x, X[U <= (g_lam(X, b, lam) / (M * g(X, lam)))])
+  }
+  return(x)
+}
+```
+
+```{r}
+n <- 10000
+b <- 2
+mean <- 0
+sd <- 2
+
+lam_star <- ((b-mean) + sqrt((b-mean)^2 + 4*sd^2)) / (2*sd^2)
+```
+
+```{r}
+t <- seq(b, 7, 0.01)
+
+hist(tr_norm_2(n, b, mean, sd), freq = FALSE, breaks = 20)
+lines(t, g_lam(t, b, lam_star), col = "red", lwd = 2)
+```
+
+```{r}
+f1 <- tr_norm(n, b, mean, sd)
+f2 <- tr_norm_2(n, b, mean, sd)
+
+library(microbenchmark)
+test <- microbenchmark(f1,f2)
+
+print(test)
+
+mean1 <- mean(f1)
+var1 <- var(f1)
+
+mean2 <- mean(f2)
+var2 <- var(f2)
+
+cost1 <- median(test$time[f1])
+cost2 <- median(test$time[f2])
+
+ratio <- (cost1 * var1) / (cost2 * var2)
+print(c("ratio =", ratio))
+
+display <- matrix(c(mean1,var1,mean2,var2), nrow = 2)
+rownames(display) <- c("mean", "var")
+colnames(display) <- c("f1", "f2")
+print(display)
+```

@@ -1,0 +1,101 @@
+---
+title: "TP 12"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercise 12
+
+```{r}
+n <- 10000
+
+MC <- function(h,sim_x,sim_y){
+  xs <- sim_x
+  ys <- sim_y
+  hs <- h(xs,ys)
+  return(mean(hs))
+}
+
+f <- function(x, b, mean, sd) {
+  1 / (sqrt(2 * pi * sd^2) * pnorm((mean - b) / sd)) *
+    exp(-(x - mean)^2 / (2 * sd^2)) *
+    (x >= b)
+}
+
+tr_norm <-function(n, b, mean, sd){
+  M <- 1 / (sqrt(2 * pi * sd^2) * pnorm((mean - b) / sd))
+  x <- numeric(0)
+  while(length(x) < n){
+    U <- runif(1)
+    X <- rnorm(1, mean, sd)
+    x <- append(x, X[U <= (f(X, b, mean, sd) / (M * dnorm(X)))])
+  }
+  return(x)
+}
+
+h <- function(x,y){
+  return(2/3 * sqrt(4*pi) * sqrt((x+y) * (y > 0)) * sin(y**4) * (3<= y) * (x >= 2))
+}
+
+sim_x <- rexp(n,3/2)
+sim_y <- tr_norm(n,2,0,2)
+
+MC_trunc <- MC(h,sim_x,sim_y)
+```
+
+## 1 
+
+```{r}
+IS_trunc <- function(n,lam_y){
+  x <- rexp(n,3/2)
+  y <- rexp(n,lam_y) + 2
+  estim <- sqrt(x+y) * sin(y**4) * 3/(2*lam_y) * exp((-y**2 / 4) + lam_y*(y-2)) * (x <= 5) 
+  return(c(mean(estim), 1/n * var(estim)))
+}
+```
+
+```{r}
+lam_y_list <- seq(0.5,2,0.1)
+n <- 10000
+
+var_list <- c()
+for (lam_y in lam_y_list){
+  Is <- IS_trunc(n,lam_y)
+  var_list <- append(var_list, Is[2])
+  var_list <- na.omit(var_list)
+}
+
+lam_star <- lam_y_list[which.min(var_list)]
+
+plot(lam_y_list, var_list,type = 'l')
+points(lam_star,min(var_list),col='red')
+paste0("The optimal lambda is: ", lam_star)
+```
+
+```{r}
+library(microbenchmark)
+n <- 10000
+mat <- matrix(nrow=0 , ncol = 2)
+
+for (k in 0:9){
+  sim_x <- rexp(n,3/2)
+  sim_y <- tr_norm(n,2,0,2)
+  MC_trunc <- MC(h,sim_x,sim_y)
+  test1 <- microbenchmark(MC_trunc)
+  cost1 <- mean(test1$time)
+  
+  IS <- IS_trunc(n,lam_star)
+  test2 <- microbenchmark(IS)
+  cost2 <- mean(test2$time)
+  
+  cost <- c(cost1,cost2)
+  mat <- rbind(mat,cost)
+}
+
+print(colMeans(mat))
+```
+

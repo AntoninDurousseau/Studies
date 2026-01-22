@@ -1,0 +1,126 @@
+---
+title: "TP 2"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Exercice 2
+
+Let $X_1, \ldots, X_n$ be i.i.d. random variables following the exponential distribution $\mathcal{E}(\lambda)$, i.e. $\mathbb{E} [X_1] = \lambda^{-1}$.
+
+## 1
+
+### (a) 
+
+Simulate 10000 realizations of the distribution $\mathcal{E}(\lambda)$ for $\lambda = 2$ using the inverse function method.
+
+### (b) 
+
+Check with a histogram and a Quantile-Quantile plot that the distribution of this sample matches the distribution $\mathcal{E}(\lambda)$.
+
+
+```{r}
+n <- 10000
+lam <- 2
+
+f_exp <-function(n,lam){
+  return(-log(runif(n)) / lam)
+}
+
+X <- f_exp(n,lam)
+```
+
+```{r}
+Y <- rexp(n,lam)
+x <- seq(0,10,0.1)
+
+par(mfrow = c(1,2))
+
+hist(X,freq = FALSE, ylim = c(0, 1.5))
+lines(density(X), col = 'blue')
+curve(dexp(x, lam),from = 0, add = TRUE, col = "red")
+
+qqplot(X,Y, main = "QQ-Plot between real Exp(2) and estimated one")
+```
+
+## 2
+
+Recall that $S_n = X_1 + . . . + X_n$ follows the gamma distribution $\Gamma(n, \lambda)$, i.e. $mathbb{E}[S_n] = n\lambda−1$.
+
+### (a) 
+
+Based on this result, simulate 10000 realizations of the gamma distribution $\Gamma(n, \lambda)$ with $\lambda = 1.5$ and $n = 10$.
+
+### (b) 
+
+Graphically verify that the distribution of this sample matches the gamma distribution $\Gamma(n, \lambda)$.
+
+```{r}
+n <- 10
+lam <- 1.5
+N <- 10000
+
+f_gamma <- function(n,lam,N){
+  return(rowSums(matrix(f_exp(n*N,lam),N,n)))
+}
+
+S <- f_gamma(n,lam,N)
+```
+
+```{r}
+Y <- rgamma(N, shape = n, rate = lam)
+x <- seq(0, 50, 0.1)
+
+par(mfrow = c(1,2))
+
+hist(S,freq = FALSE)
+lines(density(S), col = 'blue')
+curve(dgamma(x, n, lam), add = TRUE, col = "red")
+
+qqplot(S,Y,main = "QQ-Plot between real Gamma(10,1.5) and estimated one")
+```
+
+## 3
+
+Let $N = sup \{ n \ge 1 : S_n \le 1 \}$ (by convention $N = 0$ if $S_1 > 1$). Then $N$ follows the Poisson distribution $\mathcal{P}(\lambda)$. 
+
+### (a) 
+
+Based on this result, simulate 10000 realizations of the Poisson distribution $\mathcal{P}(\lambda)$ with $\lambda = 4$.
+
+### (b) 
+
+Graphically verify that the distribution of this sample matches the Poisson distribution $\mathcal{P}(\lambda)$.
+
+
+```{r}
+n <- 10000
+lam <- 4
+
+f_poiss <- function(n, lam) {
+  res <- numeric(n)
+  for (i in 1:n) {
+    sum_exp <- 0
+    k <- 0
+    while (sum_exp <= 1) {
+      sum_exp <- sum_exp + rexp(1, lam)
+      k <- k + 1
+    }
+    res[i] <- k - 1
+  }
+  return(res)
+}
+
+P <- table(f_poiss(n,lam)) / n
+Y <- table(rpois(n,lam)) / n
+mat <- rbind(P, Y)
+
+barplot(mat, main = "Frequency of P", xlab = "value of P", ylab = "frequency",
+col = c(rgb(1,0,0,1/2), rgb(0,0,1,1/2)), beside = TRUE,
+legend.text = c("approximation of Poisson", "Poisson ref"))
+
+```
