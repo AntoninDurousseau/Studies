@@ -3,6 +3,9 @@
 .RData
 .Ruserdata
 
+.venv
+
+.txt
 
 .git 
 .gitignore
