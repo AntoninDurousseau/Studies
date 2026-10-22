@@ -28,7 +28,6 @@ knitr::opts_chunk$set(cache = FALSE, warning = FALSE, message = FALSE, fig.retin
 options(encoding = 'UTF-8')
 ```
 
-
 ```{r, echo = FALSE, fig.keep= 'none'}
 # Chargement des librairies graphiques
 library(lattice)
@@ -46,6 +45,8 @@ library(rmarkdown)
 library(ggthemes)
 library(cowplot)
 library(kableExtra)
+library(tidyverse)
+library(dplyr)
 ```
 
 # Objectifs du TP
@@ -177,7 +178,7 @@ ggplot(
   geom_point(mapping = aes(
     color = species,
     shape = species)) +
-    geom_smooth(method = "lm")
+  geom_smooth(method = "lm")
 ```
 
 La même figure peut être générée par espèce en déplaçant l'argument `color = species`.
@@ -188,7 +189,7 @@ ggplot(
   mapping = aes(x = flipper_length_mm, y = body_mass_g, color = species)) +
   geom_point(mapping = aes(
     shape = species)) +
-    geom_smooth(method = "lm")
+  geom_smooth(method = "lm")
 ```
 
 Les pentes entre les espèces ne sont pas si éloignées. Nous décidons que conserver
@@ -345,9 +346,26 @@ package **ggplot2**.
 
 ```{r, fig.height = 6, fig.width = 12}
 # Descriptive statistics
-
+summary(dat$ClaimNb)
+summary(dat$Exposure)
 # A compléter
 
+p1 <- ggplot(data = dat,
+             mapping = aes(x = ClaimNb)) + 
+    geom_histogram(color = "black",
+                 fill = "blue",
+                 alpha = 0.1) + 
+    labs(x = "Nombre de sinistre", y = "Nombre")
+  
+
+p2 <- ggplot(data = dat,
+             mapping = aes(x = Exposure)) + 
+    geom_histogram(color = "black",
+                 fill = "blue",
+                 alpha = 0.1) + 
+    labs(x = "Exposition", y = "Nombre")
+
+plot_grid(p1,p2, labels = c('A','B'))
 ```
 
 ### Etape 2 : Calculer la fréquence {-}
@@ -360,7 +378,12 @@ Construire un tableau présentant l’exposition cumulée et le nombre d’obser
 :::
 
 ```{r}
-# A compléter
+dat %>%
+  group_by(ClaimNb) %>%
+  summarize(n = n(), Exposure = round(sum(Exposure), 0)) %>%
+  kable(
+    col.names = c("Nombre de sinistres", "Nombre d'eposition","exposition total")
+  )
 ```
 
 Ce calcul de fréquence sera ensuite utile pour l'affichage des résultats.
