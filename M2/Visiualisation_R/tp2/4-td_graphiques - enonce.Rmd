@@ -187,7 +187,6 @@ ggplot(world_df) +
   geom_sf(color = "black", fill = "grey") +
   theme_void()
 ```
-
 ::: exercise-box
 
 
@@ -195,6 +194,23 @@ En partant de la visualisation et  des données ci-dessus, représenter et analy
 les disparités d'espérance 
 de vie et de revenus.
 :::
+
+```{r}
+df <- world_df %>%
+  mutate(log_gdpPercap = round(log10(gdpPercap),0))
+
+centroid_df <- st_centroid(df, of_largest_polygon = T)
+
+library(scales)
+ggplot(df) +
+  geom_sf(aes(fill = lifeExp)) +
+  geom_sf(data = centroid_df, aes(shape = factor(log_gdpPercap)),
+          color = "black",
+          alpha = 0.5,
+          size = 0.75) + 
+  scale_fill_viridis_c(option = "viridis") +
+  theme_void()
+```
 
 ---
 
@@ -326,15 +342,17 @@ quand votre code sera finalisé.
 library(mapview)
 library(sf)
 
-## Remove NA
 df_map_dyn <- accidents %>%
-  filter(???) %>%
-  na.omit()
+  mutate(long = as.numeric(gsub(",", ".", long)),   # texte -> numérique
+         lat  = as.numeric(gsub(",", ".", lat))) %>%
+  filter(!is.na(lat), !is.na(long),
+         lat != 0, long != 0)
 
-# Make map and print it
-mymap <- st_as_sf(???)
+mymap <- st_as_sf(df_map_dyn[1:1000,], coords = c("long", "lat"), crs = 4326, na.fail = FALSE)
+
 mapview(mymap, cex = 2, layer.name = "Gravité",
-        zcol = "grav",legend = TRUE )
+        zcol = "grav", legende = TRUE,
+        map.types = "OpenStreetMap")
 ```
 
 
