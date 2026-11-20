@@ -30,23 +30,24 @@ project/
 ## Prérequis
 
 - Windows 10/11 64 bits
-- Python 3.12
+- Python 3.10.11
 - Une connexion Internet pour installer les dépendances
 
-TensorFlow et PyTorch sont tous deux importés par le notebook. Leur installation
-peut prendre du temps et occuper plusieurs gigaoctets. L'environnement virtuel
-est local à ce projet et ne doit pas être publié sur GitHub.
+L'environnement `.venv` contient les bibliothèques utilisées par les notebooks,
+dont TensorFlow avec DirectML, PyTorch, SciPy et les outils de lecture d'images.
+Son installation peut prendre du temps et occuper plusieurs gigaoctets. Il est
+local à ce projet et ne doit pas être publié sur GitHub.
 
 ## Installation (PowerShell)
 
 Depuis la racine de ce dossier :
 
 ```powershell
-py -3.12 -m venv .venv
+py -3.10 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-python -m ipykernel install --sys-prefix --name unet-mammography --display-name "Python (U-Net mammography)"
+python -m ipykernel install --sys-prefix --name unet-mammography --display-name "Python (U-Net DirectML)"
 ```
 
 Si PowerShell bloque l'activation du script, vous pouvez appeler directement
@@ -56,44 +57,27 @@ les exécutables de l'environnement, par exemple
 Lancer ensuite JupyterLab depuis l'environnement :
 
 ```powershell
-.\.venv\Scripts\jupyter-lab.exe
+python -m jupyterlab
 ```
 
-Dans le notebook, choisir le noyau **Python (U-Net mammography)**.
+Dans le notebook, choisir le noyau **Python (U-Net DirectML)**.
 
-Dans VS Code, ouvrir ce dossier comme espace de travail. Le réglage versionné
-`.vscode/settings.json` indique le venv du projet comme interpréteur Python par
-défaut. Pour le notebook déjà ouvert, utiliser **Select Kernel** en haut à
-droite, choisir **Python (U-Net mammography)**, puis redémarrer le noyau. Pour
-vérifier l'interpréteur actif dans une cellule, exécuter `import sys;
-print(sys.executable)` : le chemin doit se terminer par
-`project\\.venv\\Scripts\\python.exe`.
+Dans VS Code, sélectionner l'interpréteur `.\.venv\Scripts\python.exe` et le
+noyau **Python (U-Net DirectML)** pour le notebook. Redémarrer le noyau après
+le changement. Pour vérifier l'interpréteur actif dans une cellule, exécuter
+`import sys; print(sys.executable)` : le chemin doit se terminer par
+`UNet_&_CNN\\.venv\\Scripts\\python.exe`.
 
 ## GPU AMD sous Windows
 
-L'installation TensorFlow standard de ce projet (Python 3.12 et TensorFlow
-récent) n'utilise pas le GPU AMD sous Windows natif. Microsoft documente un
-plugin DirectML pour AMD, mais ce plugin est abandonné. Sa documentation limite
-Python à la version 3.10 et impose `tensorflow-cpu==2.10`. Python 3.10.11 est
-donc la version la plus récente utilisable avec cette voie, pas la version la
-plus récente de Python en général. La Radeon RX 6750 XT est une carte DirectX 12,
-mais cela ne garantit pas la compatibilité de chaque opération du modèle.
+L'environnement utilise `tensorflow-cpu==2.10.0` avec le plugin DirectML
+Microsoft. Ce plugin est abandonné et limité à Python 3.10 ; certaines
+opérations peuvent ne pas être prises en charge. La Radeon RX 6750 XT est une
+carte DirectX 12, mais cela ne garantit pas la compatibilité de chaque
+opération.
 
-Le venv standard `.venv` reste en Python 3.12. Un venv ne peut pas changer de
-version Python après sa création ; pour tester DirectML, créer un environnement
-isolé `.venv-amd` et installer les dépendances séparément. Ne pas utiliser
-`requirements.txt`, qui demande un TensorFlow trop récent pour le plugin :
-
-```powershell
-py -3.10 -m venv .venv-amd
-.\.venv-amd\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install "numpy<1.24" "pandas>=2.2,<3" "matplotlib>=3.8,<4" "seaborn>=0.13,<1" tensorflow-cpu==2.10 tensorflow-directml-plugin "torch>=2.2,<3" "ipykernel>=6.29,<7"
-python -m ipykernel install --user --name unet-amd --display-name "Python (U-Net AMD DirectML)"
-```
-
-Sélectionner le noyau **Python (U-Net AMD DirectML)** dans le notebook, puis le
-redémarrer. Vérifier la version, le GPU détecté et l'exécution d'une opération :
+Vérifier la version, le GPU détecté et l'exécution d'une opération dans le
+noyau sélectionné :
 
 ```python
 import tensorflow as tf
