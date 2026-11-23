@@ -23,3 +23,6 @@ __pycache__/
 
 
 .ipynb_checkpoints/
+# Données SIG lourdes (>50 Mo)
+M2/Enjeux_Climatique/BDTOPO_3-5_TOUSTHEMES_SHP_LAMB93_D075_2026-09-15/
+M2/Enjeux_Climatique/tri_2020_sig_di_75/
